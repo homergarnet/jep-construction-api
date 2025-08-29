@@ -1,0 +1,1 @@
+dotnet ef dbcontext scaffold "Server=(local)\sqlx19;Database=axpfm;User ID=sa;Password=sa!;" Microsoft.EntityFrameworkCore.SqlServer -o Models --force
