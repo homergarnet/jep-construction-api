@@ -1,27 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using jep_construction_api.Models;
+using jep_construction_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 
-
-namespace api
+namespace jep_construction_api
 {
     public class Startup
     {
@@ -41,13 +25,13 @@ namespace api
             .AddNewtonsoftJson(opt =>
                 opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
             );
-            
+
             //SQL SERVER CONNECTION HERE
 
-            // services.AddDbContext<axpfmContext>(option =>
-            // {
-            //     option.UseSqlServer(Configuration.GetConnectionString("axpfm"));
-            // });
+            services.AddDbContext<Jep_ConstructionContext>(option =>
+            {
+                option.UseSqlServer(Configuration.GetConnectionString("Jep_Construction"));
+            });
 
             // services.AddDbContext<axpcmContext>(option =>
             // {
@@ -104,9 +88,10 @@ namespace api
             );
 
             services.AddCors();
-            
+
 
             //SERVICES
+            services.AddTransient<IAuthService, AuthService>();
             // services.AddTransient<IEmailService, EmailService>();
             // services.AddTransient<IEmailTemplateService, EmailTemplateService>();
             // services.AddTransient<IRoleService, RoleService>();
@@ -122,7 +107,7 @@ namespace api
             //     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"uploads")),
             //     RequestPath = new PathString("/uploads")
             // });
-            
+
             // IIS FOR FILE UPLOADING
             // app.UseStaticFiles(new StaticFileOptions()
             // {
