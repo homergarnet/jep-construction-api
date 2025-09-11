@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using jep_construction_api.Constants;
 using jep_construction_api.DTOS;
 using jep_construction_api.Library;
 using jep_construction_api.Services;
@@ -12,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace jep_construction_api.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class AuthController : ControllerBase
     {
 
@@ -25,34 +28,72 @@ namespace jep_construction_api.Controllers
         }
 
         [HttpGet]
-        [Route("api/auth-test")]
+        [Route("auth-test")]
         public IActionResult AuthTest()
         {
             return Ok("Ok");
         }
 
         [HttpPost]
-        [Route("api/create-account")]
+        [Route("create-account")]
         public IActionResult CreateAccount([FromBody] UserDto userInfo)
         {
             try
             {
 
-                var user = _iAuthService.CreateAccount(userInfo);
-                if (user == "User Already Exist")
+                var createAccount = _iAuthService.CreateAccount(userInfo);
+                if (!createAccount.IsSuccess)
                 {
                     return new ContentResult
                     {
                         StatusCode = 500,
                         ContentType = "application/json",
-                        Content = user
+                        Content = JsonSerializer.Serialize(createAccount)
                     };
                 }
                 return new ContentResult
                 {
                     StatusCode = 200,
                     ContentType = "application/json",
-                    Content = user
+                    Content = JsonSerializer.Serialize(createAccount)
+                };
+
+            }
+
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
+
+        }
+
+        [HttpPost]
+        [Route("login")]
+        public IActionResult Login([FromBody] LoginDto loginInfo)
+        {
+            try
+            {
+
+                var login = _iAuthService.Login(loginInfo);
+                if (!login.IsSuccess)
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 500,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(login)
+                    };
+                }
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(login)
                 };
 
             }

@@ -1,6 +1,9 @@
+using jep_construction_api.Constants;
 using jep_construction_api.DTOS;
 using jep_construction_api.Library;
 using jep_construction_api.Models;
+using jep_construction_api.Response;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
@@ -21,15 +24,24 @@ namespace jep_construction_api.Services
             this.db = db;
         }
 
-        public string CreateAccount(UserDto item)
+        public AuthResponse CreateAccount(UserDto item)
         {
+
+            var response = new AuthResponse
+            {
+                UserList = new List<UserDto>(),
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
 
             User user = new User();
             // user.Id = item.Id;
             var userExist = db.Users.Any(z => z.Email == item.Email);
             if (userExist)
             {
-                return "User Already Exist";
+                response.IsSuccess = false;
+                response.ApiMessage = AuthConstants.CREATE_ACCOUNT_FAILED;
+
             }
             else
             {
@@ -40,9 +52,17 @@ namespace jep_construction_api.Services
                 }
                 else
                 {
-                    throw new ArgumentException("Invalid email address.");
+                    response.IsSuccess = false;
+                    response.ApiMessage = AuthConstants.INVALID_EMAIL_ADDRESS;
+                    return response;
+                    //throw new ArgumentException("Invalid email address.");
                 }
-                user.EmployeeNumber = Common.GenEmployeeNumber(item.EmployeeNumber.ToString());
+                var lastId = db.Users.OrderByDescending(u => u.Id)
+                     .Select(u => u.Id)
+                     .FirstOrDefault();
+                lastId++;
+
+                user.EmployeeNumber = Common.GenEmployeeNumber(lastId.ToString());
                 user.Name = item.Name?.Trim();
                 user.MobileNumber = item.MobileNumber?.Trim();
                 user.Position = item.Position?.Trim();
@@ -55,11 +75,142 @@ namespace jep_construction_api.Services
                 user.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
                 db.Users.Add(user);
                 db.SaveChanges();
+                response.IsSuccess = true;
+                response.ApiMessage = AuthConstants.CREATE_ACCOUNT_SUCCESS;
 
-                return "Successfully Created Account";
+            }
+
+            return response;
+
+        }
+
+        public AuthResponse Login(LoginDto loginDto)
+        {
+
+            var response = new AuthResponse
+            {
+                UserList = new List<UserDto>(),
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+            var user = db.Users.Where(z => z.Email.Equals(loginDto.Email)).FirstOrDefault();
+            bool verified = false;
+            string password = loginDto.Password.Trim();
+
+            if (user != null)
+            {
+                verified = BCrypt.Net.BCrypt.Verify(password, user.Password);
+                if (verified)
+                {
+
+                    var roleId = user.UserType.Equals("admin") ? "1": user.UserType.Equals("employee") ? "2": user.UserType.Equals("client")? "3": "";
+                    // User Claims
+                    var claims = new List<Claim>
+                    {
+                        new Claim("UserId", user.Id.ToString()),
+                        new Claim("Email", user.Email.ToString()),
+                        new Claim("Name", user.Name.ToString()),
+                        new Claim("Position", user.Position.ToString()),
+                        new Claim("RoleId", roleId),
+
+                    };
+
+                    // Encrypt credentials
+                    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]));
+                    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                    var auth = new JwtSecurityToken(configuration["Jwt:Issuer"],
+                        configuration["Jwt:Issuer"],
+                        claims,
+                        expires: DateTime.Now.AddHours(8766), // Set to 1 year
+                        signingCredentials: credentials);
+
+                    // Generate JWT
+                    var token = new JwtSecurityTokenHandler().WriteToken(auth);
+
+                    if (loginDto.UserType.Equals("admin"))
+                    {
+                        if (user.UserType.Equals(loginDto.UserType))
+                        {
+
+                            response.IsSuccess = true;
+                            response.ApiMessage = token;
+                            return response;
+
+                        }
+                        else
+                        {
+
+                            response.IsSuccess = false;
+                            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                            return response;
+
+                        }
+
+                    }
+
+                    else if (loginDto.UserType.Equals("employee"))
+                    {
+
+                        if (user.UserType.Equals(loginDto.UserType))
+                        {
+
+                            response.IsSuccess = true;
+                            response.ApiMessage = token;
+                            return response;
+
+                        }
+                        else
+                        {
+
+                            response.IsSuccess = false;
+                            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                            return response;
+
+                        }
+
+                    }
+
+                    else if (loginDto.UserType.Equals("client"))
+                    {
+
+                        if (user.UserType.Equals(loginDto.UserType))
+                        {
+
+                            response.IsSuccess = true;
+                            response.ApiMessage = token;
+                            return response;
+                        }
+                        else
+                        {
+
+                            response.IsSuccess = false;
+                            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                            return response;
+
+                        }
+
+                    }
+
+                }
+
+                //Not verified
+                else
+                {
+
+                    response.IsSuccess = false;
+                    response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                    return response;
+
+                }
+
             }
 
 
+            response.IsSuccess = false;
+            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+
+            return response;
 
         }
 

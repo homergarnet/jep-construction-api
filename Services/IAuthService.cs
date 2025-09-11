@@ -1,6 +1,7 @@
 
 
 using jep_construction_api.DTOS;
+using jep_construction_api.Response;
 
 namespace jep_construction_api.Services
 {
@@ -8,7 +9,8 @@ namespace jep_construction_api.Services
     public interface IAuthService
     {
 
-        string CreateAccount(UserDto userReq);
+        AuthResponse CreateAccount(UserDto userReq);
+        AuthResponse Login(LoginDto loginInfo);
         //string CreatePersonalInfo(
         //    IFormFile ValidId, IFormFile SelfieId, string Username, string Password, string FirstName, 
         //    string MiddleName, string LastName, DateTime BirthDate, string Gender, string Phone, 
