@@ -19,7 +19,8 @@ namespace jep_construction_api.Models
         public long Id { get; set; }
         public string? Email { get; set; }
         public string? EmployeeNumber { get; set; }
-        public string? Name { get; set; }
+        public string? Firstname { get; set; }
+        public string? Lastname { get; set; }
         public string? MobileNumber { get; set; }
         public string? Position { get; set; }
         public decimal? Salary { get; set; }

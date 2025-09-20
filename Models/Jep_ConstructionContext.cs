@@ -188,10 +188,12 @@ namespace jep_construction_api.Models
                     .IsRequired()
                     .HasDefaultValueSql("((1))");
 
-                entity.Property(e => e.Location).HasMaxLength(255);
+                entity.Property(e => e.Location)
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
 
-                entity.Property(e => e.Status)
-                    .HasMaxLength(20)
+                entity.Property(e => e.ProjectName)
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity.HasOne(d => d.User)
@@ -206,14 +208,18 @@ namespace jep_construction_api.Models
                 entity.ToTable("User");
 
                 entity.Property(e => e.Address)
-                    .HasMaxLength(10)
-                    .IsFixedLength();
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.Email)
-                    .HasMaxLength(10)
-                    .IsFixedLength();
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.EmployeeNumber)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Firstname)
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
@@ -221,13 +227,13 @@ namespace jep_construction_api.Models
                     .IsRequired()
                     .HasDefaultValueSql("((1))");
 
+                entity.Property(e => e.Lastname)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.MobileNumber)
                     .HasMaxLength(20)
                     .IsUnicode(false);
-
-                entity.Property(e => e.Name)
-                    .HasMaxLength(10)
-                    .IsFixedLength();
 
                 entity.Property(e => e.Password).IsUnicode(false);
 

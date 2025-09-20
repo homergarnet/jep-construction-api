@@ -40,12 +40,12 @@ namespace jep_construction_api.Services
             if (userExist)
             {
                 response.IsSuccess = false;
-                response.ApiMessage = AuthConstants.CREATE_ACCOUNT_FAILED;
+                response.ApiMessage = AuthConstants.EMAIL_ALREADY_EXIST;
 
             }
             else
             {
-                var email = item.Email?.Trim();
+                var email = item.Email?.Trim() ?? "";
                 if (!string.IsNullOrEmpty(email) && new EmailAddressAttribute().IsValid(email))
                 {
                     user.Email = email;
@@ -63,15 +63,16 @@ namespace jep_construction_api.Services
                 lastId++;
 
                 user.EmployeeNumber = Common.GenEmployeeNumber(lastId.ToString());
-                user.Name = item.Name?.Trim();
-                user.MobileNumber = item.MobileNumber?.Trim();
-                user.Position = item.Position?.Trim();
+                user.Firstname = item.Firstname?.Trim() ?? "";
+                user.Lastname = item.Lastname?.Trim() ?? "";
+                user.MobileNumber = item.MobileNumber?.Trim() ?? "";
+                user.Position = item.Position?.Trim() ?? "";
                 user.Salary = item.Salary;
-                user.Status = item.Status?.Trim();
+                user.Status = item.Status?.Trim() ?? "";
                 user.Password = BCrypt.Net.BCrypt.HashPassword(item.Password);
-                user.Address = item.Address?.Trim();
+                user.Address = item.Address?.Trim() ?? "";
                 user.DateOfBirth = item.DateOfBirth;
-                user.UserType = item.UserType?.Trim();
+                user.UserType = item.UserType?.Trim() ?? "";
                 user.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
                 db.Users.Add(user);
                 db.SaveChanges();
@@ -95,7 +96,7 @@ namespace jep_construction_api.Services
             };
             var user = db.Users.Where(z => z.Email.Equals(loginDto.Email)).FirstOrDefault();
             bool verified = false;
-            string password = loginDto.Password.Trim();
+            string password = loginDto.Password.Trim() ?? "";
 
             if (user != null)
             {
@@ -103,14 +104,15 @@ namespace jep_construction_api.Services
                 if (verified)
                 {
 
-                    var roleId = user.UserType.Equals("admin") ? "1": user.UserType.Equals("employee") ? "2": user.UserType.Equals("client")? "3": "";
+                    var roleId = user.UserType.Equals("admin") ? "1" : user.UserType.Equals("employee") ? "2" : user.UserType.Equals("client") ? "3" : "";
                     // User Claims
                     var claims = new List<Claim>
                     {
                         new Claim("UserId", user.Id.ToString()),
-                        new Claim("Email", user.Email.ToString()),
-                        new Claim("Name", user.Name.ToString()),
-                        new Claim("Position", user.Position.ToString()),
+                        new Claim("Email", user.Email ?? ""),
+                        new Claim("Firstname", user.Firstname ?? ""),
+                        new Claim("Lastname", user.Lastname ?? ""),
+                        new Claim("Position", user.Position?? ""),
                         new Claim("RoleId", roleId),
 
                     };
