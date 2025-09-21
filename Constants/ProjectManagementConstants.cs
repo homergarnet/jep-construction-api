@@ -7,5 +7,8 @@
         public const string UPDATE_PROJECT_MANAGEMENT_FAILED = "Update prject management failed";
         public const string SOFT_DELETE_PROJECT_MANAGEMENT_SUCCESS = "SoftDeleteProjectManagementById successfully executed";
         public const string SOFT_DELETE_PROJECT_MANAGEMENT_FAILED = "SoftDeleteProjectManagementById no update changes";
+        public const string PROJECT_NAME_ALREADY_EXIST = "Project name already exist";
+        public const string INVALID_PROJECT_ID = "Invalid Project ID";
+        public const string PROJECT_ID_NOT_FOUND = "Project id not found";
     }
 }

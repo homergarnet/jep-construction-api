@@ -7,13 +7,13 @@ namespace jep_construction_api.Models
     {
         public User()
         {
-            ClientFeedbacks = new HashSet<ClientFeedback>();
             EmployeeAttendances = new HashSet<EmployeeAttendance>();
             EmployeePayslips = new HashSet<EmployeePayslip>();
             Inventories = new HashSet<Inventory>();
             MessageSenders = new HashSet<Message>();
             MessageUsers = new HashSet<Message>();
             ProjectManagements = new HashSet<ProjectManagement>();
+            Reviews = new HashSet<Review>();
         }
 
         public long Id { get; set; }
@@ -34,12 +34,12 @@ namespace jep_construction_api.Models
         public DateTime DateTimeCreated { get; set; }
         public DateTime? DateTimeUpdated { get; set; }
 
-        public virtual ICollection<ClientFeedback> ClientFeedbacks { get; set; }
         public virtual ICollection<EmployeeAttendance> EmployeeAttendances { get; set; }
         public virtual ICollection<EmployeePayslip> EmployeePayslips { get; set; }
         public virtual ICollection<Inventory> Inventories { get; set; }
         public virtual ICollection<Message> MessageSenders { get; set; }
         public virtual ICollection<Message> MessageUsers { get; set; }
         public virtual ICollection<ProjectManagement> ProjectManagements { get; set; }
+        public virtual ICollection<Review> Reviews { get; set; }
     }
 }

@@ -10,40 +10,41 @@ namespace jep_construction_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProjectManagementController : ControllerBase
+    public class ReviewController : ControllerBase
     {
+
         private readonly IConfiguration _configuration;
-        private readonly IProjectManagementService _iProjectManagementService;
-        public ProjectManagementController(IConfiguration configuration, IProjectManagementService iProjectManagementService)
+        private readonly IReviewService _iReviewService;
+
+        public ReviewController(IConfiguration configuration, IReviewService iReviewService)
         {
             _configuration = configuration;
-            _iProjectManagementService = iProjectManagementService;
+            _iReviewService = iReviewService;
         }
 
         [Authorize]
         [HttpPost]
-        [Route("create-project-management")]
-        public IActionResult CreateProjectManagement([FromBody] CreateUpdateProjectManagementRequest req)
+        [Route("create-review")]
+        public IActionResult CreateReview([FromBody] CreateUpdateReviewRequest req)
         {
             try
             {
 
-                var createProjectManagement = _iProjectManagementService.CreateProjectManagement(req);
-                if (!createProjectManagement.IsSuccess && createProjectManagement.ApiMessage.Equals(ProjectManagementConstants.PROJECT_NAME_ALREADY_EXIST))
+                var createReview = _iReviewService.CreateReview(req);
+                if(!createReview.IsSuccess && createReview.ApiMessage.Equals(ReviewConstants.REVIEW_ALREADY_EXIST))
                 {
                     return new ContentResult
                     {
                         StatusCode = 400,
                         ContentType = "application/json",
-                        Content = JsonSerializer.Serialize(createProjectManagement)
+                        Content = JsonSerializer.Serialize(createReview)
                     };
                 }
-
                 return new ContentResult
                 {
                     StatusCode = 200,
                     ContentType = "application/json",
-                    Content = JsonSerializer.Serialize(createProjectManagement)
+                    Content = JsonSerializer.Serialize(createReview)
                 };
 
             }
@@ -62,8 +63,8 @@ namespace jep_construction_api.Controllers
 
         [Authorize]
         [HttpGet]
-        [Route("get-project-management-list")]
-        public IActionResult GetProjectManagementList(
+        [Route("get-review-list")]
+        public IActionResult GetReviewList(
             [FromQuery] string? keyword = "", [FromQuery] long? userId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
@@ -72,13 +73,13 @@ namespace jep_construction_api.Controllers
             {
 
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-                var getProjectManagementList = _iProjectManagementService.GetProjectManagementList(keyword ?? "", userId, page, pageSize);
+                var getReviewList = _iReviewService.GetReviewList(keyword ?? "", userId, page, pageSize);
 
                 return new ContentResult
                 {
                     StatusCode = 200,
                     ContentType = "application/json",
-                    Content = JsonSerializer.Serialize(getProjectManagementList)
+                    Content = JsonSerializer.Serialize(getReviewList)
                 };
 
             }
@@ -97,31 +98,30 @@ namespace jep_construction_api.Controllers
 
         [Authorize]
         [HttpGet]
-        [Route("get-project-management-by-id")]
-        public IActionResult GetProjectManagementById([FromQuery] long id = 0)
+        [Route("get-review-by-id")]
+        public IActionResult GetReviewById([FromQuery] long id = 0)
         {
 
             try
             {
 
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-                var getProjectManagement = _iProjectManagementService.GetProjectManagementById(id);
-                if (!getProjectManagement.IsSuccess &&
-                    getProjectManagement.ApiMessage.Equals(ProjectManagementConstants.INVALID_PROJECT_ID)
-                    || getProjectManagement.ApiMessage.Equals(ProjectManagementConstants.PROJECT_ID_NOT_FOUND))
+                var getReview = _iReviewService.GetReviewById(id);
+                if (!getReview.IsSuccess && getReview.ApiMessage.Equals(ReviewConstants.INVALID_REVIEW_ID)
+                    || getReview.ApiMessage.Equals(ReviewConstants.REVIEW_NOT_FOUND))
                 {
                     return new ContentResult
                     {
                         StatusCode = 400,
                         ContentType = "application/json",
-                        Content = JsonSerializer.Serialize(getProjectManagement)
+                        Content = JsonSerializer.Serialize(getReview)
                     };
                 }
                 return new ContentResult
                 {
                     StatusCode = 200,
                     ContentType = "application/json",
-                    Content = JsonSerializer.Serialize(getProjectManagement)
+                    Content = JsonSerializer.Serialize(getReview)
                 };
 
             }
@@ -140,15 +140,14 @@ namespace jep_construction_api.Controllers
 
         [Authorize]
         [HttpPut]
-        [Route("update-project-management")]
-        public async Task<IActionResult> UpdateProjectManagement([FromBody] CreateUpdateProjectManagementRequest req)
+        [Route("update-review")]
+        public async Task<IActionResult> UpdateReview([FromBody] CreateUpdateReviewRequest req)
         {
-
             try
             {
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-                var result = _iProjectManagementService.UpdateProjectManagement(req);
-                if (!result.IsSuccess && result.ApiMessage.Equals(ProjectManagementConstants.UPDATE_PROJECT_MANAGEMENT_FAILED))
+                var result = _iReviewService.UpdateReview(req);
+                if (!result.IsSuccess && result.ApiMessage.Equals(ReviewConstants.UPDATE_REVIEW_FAILED))
                 {
                     return new ContentResult
                     {
@@ -157,7 +156,6 @@ namespace jep_construction_api.Controllers
                         Content = JsonSerializer.Serialize(result)
                     };
                 }
-
                 return Ok(result);
 
             }
@@ -174,14 +172,14 @@ namespace jep_construction_api.Controllers
         }
 
         [Authorize]
-        [HttpPut("soft-delete-project-management-by-id/{id}")]
-        public IActionResult SoftDeleteProjectManagementById(string id)
+        [HttpPut("soft-delete-review-by-id/{id}")]
+        public IActionResult SoftDeleteReviewById(string id)
         {
             try
             {
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-                var result = _iProjectManagementService.SoftDeleteProjectManagementById(id);
-                if (!result.IsSuccess && result.ApiMessage.Equals(ProjectManagementConstants.SOFT_DELETE_PROJECT_MANAGEMENT_FAILED))
+                var result = _iReviewService.SoftDeleteReviewById(id);
+                if (!result.IsSuccess && result.ApiMessage.Equals(ReviewConstants.SOFT_DELETE_REVIEW_FAILED))
                 {
                     return new ContentResult
                     {
@@ -190,6 +188,7 @@ namespace jep_construction_api.Controllers
                         Content = JsonSerializer.Serialize(result)
                     };
                 }
+
                 return Ok(result);
             }
             catch (Exception ex)
@@ -201,9 +200,6 @@ namespace jep_construction_api.Controllers
                     Content = Common.GetFormattedExceptionMessage(ex)
                 };
             }
-
-
         }
-
     }
 }

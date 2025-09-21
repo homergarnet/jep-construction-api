@@ -16,13 +16,13 @@ namespace jep_construction_api.Models
         {
         }
 
-        public virtual DbSet<ClientFeedback> ClientFeedbacks { get; set; } = null!;
         public virtual DbSet<ClientRequest> ClientRequests { get; set; } = null!;
         public virtual DbSet<EmployeeAttendance> EmployeeAttendances { get; set; } = null!;
         public virtual DbSet<EmployeePayslip> EmployeePayslips { get; set; } = null!;
         public virtual DbSet<Inventory> Inventories { get; set; } = null!;
         public virtual DbSet<Message> Messages { get; set; } = null!;
         public virtual DbSet<ProjectManagement> ProjectManagements { get; set; } = null!;
+        public virtual DbSet<Review> Reviews { get; set; } = null!;
         public virtual DbSet<User> Users { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -36,19 +36,6 @@ namespace jep_construction_api.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ClientFeedback>(entity =>
-            {
-                entity.ToTable("ClientFeedback");
-
-                entity.Property(e => e.Feedback).IsUnicode(false);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.ClientFeedbacks)
-                    .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_ClientFeedback_User");
-            });
-
             modelBuilder.Entity<ClientRequest>(entity =>
             {
                 entity.ToTable("ClientRequest");
@@ -201,6 +188,29 @@ namespace jep_construction_api.Models
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ProjectManagement_User");
+            });
+
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.ToTable("Review");
+
+                entity.Property(e => e.IsEnabled)
+                    .IsRequired()
+                    .HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.ReviewDescription).IsUnicode(false);
+
+                entity.HasOne(d => d.ProjectManagement)
+                    .WithMany(p => p.Reviews)
+                    .HasForeignKey(d => d.ProjectManagementId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Reviews_ProjectManagement");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.Reviews)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Reviews_User");
             });
 
             modelBuilder.Entity<User>(entity =>

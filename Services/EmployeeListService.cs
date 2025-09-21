@@ -36,7 +36,7 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            User user = new User();
+
             // user.Id = item.Id;
             var userExist = db.Users.Any(z => z.Email == createEmployeeReq.Email);
             if (userExist)
@@ -47,6 +47,7 @@ namespace jep_construction_api.Services
             }
             else
             {
+                User user = new User();
                 var email = createEmployeeReq.Email?.Trim() ?? "";
                 if (!string.IsNullOrEmpty(email) && new EmailAddressAttribute().IsValid(email))
                 {
@@ -101,7 +102,7 @@ namespace jep_construction_api.Services
             {
                 if (id <= 0)
                 {
-                    response.ApiMessage = "Invalid employee ID.";
+                    response.ApiMessage = EmployeeListConstants.INVALID_EMPLOYEE_ID;
                     return response;
                 }
 
@@ -122,7 +123,7 @@ namespace jep_construction_api.Services
                     else
                     {
                         response.IsSuccess = false;
-                        response.ApiMessage = "Employee not found.";
+                        response.ApiMessage = EmployeeListConstants.EMPLOYEE_NOT_FOUND;
                     }
                 }
             }

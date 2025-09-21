@@ -1,4 +1,5 @@
-﻿using jep_construction_api.DTOS;
+﻿using jep_construction_api.Constants;
+using jep_construction_api.DTOS;
 using jep_construction_api.Library;
 using jep_construction_api.Request;
 using jep_construction_api.Services;
@@ -30,11 +31,12 @@ namespace jep_construction_api.Controllers
             {
 
                 var createAccount = _employeeListService.CreateEmployee(createEmployeeReq);
-                if (!createAccount.IsSuccess)
+                if (!createAccount.IsSuccess && createAccount.ApiMessage.Equals(EmployeeListConstants.EMAIL_ALREADY_EXIST) 
+                    || createAccount.ApiMessage.Equals(AuthConstants.INVALID_EMAIL_ADDRESS))
                 {
                     return new ContentResult
                     {
-                        StatusCode = 500,
+                        StatusCode = 400,
                         ContentType = "application/json",
                         Content = JsonSerializer.Serialize(createAccount)
                     };
@@ -106,7 +108,16 @@ namespace jep_construction_api.Controllers
 
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
                 var getEmployee = _employeeListService.GetEmployeeById(id);
-
+                if (!getEmployee.IsSuccess && getEmployee.ApiMessage.Equals(EmployeeListConstants.INVALID_EMPLOYEE_ID) 
+                    || getEmployee.ApiMessage.Equals(EmployeeListConstants.EMPLOYEE_NOT_FOUND))
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 400,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(getEmployee)
+                    };
+                }
                 return new ContentResult
                 {
                     StatusCode = 200,
@@ -133,37 +144,63 @@ namespace jep_construction_api.Controllers
         [Route("update-employee")]
         public async Task<IActionResult> UpdateEmployee([FromBody] CreateUpdateEmployeeRequest updateEmployeeReq)
         {
-            var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-            var result = _employeeListService.UpdateEmployee(updateEmployeeReq);
-            if (!result.IsSuccess)
+            try
+            {
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var result = _employeeListService.UpdateEmployee(updateEmployeeReq);
+                if (!result.IsSuccess && result.ApiMessage.Equals(EmployeeListConstants.UPDATE_EMPLOYEE_FAILED))
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 400,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(result)
+                    };
+                }
+                return Ok(result);
+
+            }
+            catch (Exception ex)
             {
                 return new ContentResult
                 {
-                    StatusCode = 400,
-                    ContentType = "application/json",
-                    Content = JsonSerializer.Serialize(result)
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
                 };
             }
-            return Ok(result);
+
         }
 
         [Authorize]
         [HttpPut("soft-delete-employee-by-id/{id}")]
         public IActionResult SoftDeleteEmployeeById(string id)
         {
+            try
+            {
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var result = _employeeListService.SoftDeleteEmployeeById(id);
+                if (!result.IsSuccess && result.ApiMessage.Equals(EmployeeListConstants.SOFT_DELETE_EMPLOYEE_FAILED))
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 400,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(result)
+                    };
+                }
 
-            var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-            var result = _employeeListService.SoftDeleteEmployeeById(id);
-            if (!result.IsSuccess)
+                return Ok(result);
+            }
+            catch (Exception ex)
             {
                 return new ContentResult
                 {
                     StatusCode = 500,
-                    ContentType = "application/json",
-                    Content = JsonSerializer.Serialize(result)
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
                 };
             }
-            return Ok(result);
         }
 
     }

@@ -1,9 +1,12 @@
-﻿namespace jep_construction_api.Request
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace jep_construction_api.Request
 {
     public class CreateUpdateProjectManagementRequest
     {
         public long? Id { get; set; }
         public long UserId { get; set; }
+        [Required]
         public string ProjectName { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

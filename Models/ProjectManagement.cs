@@ -5,6 +5,11 @@ namespace jep_construction_api.Models
 {
     public partial class ProjectManagement
     {
+        public ProjectManagement()
+        {
+            Reviews = new HashSet<Review>();
+        }
+
         public long Id { get; set; }
         public long UserId { get; set; }
         public string ProjectName { get; set; } = null!;
@@ -19,5 +24,6 @@ namespace jep_construction_api.Models
         public DateTime? DateTimeUpdated { get; set; }
 
         public virtual User User { get; set; } = null!;
+        public virtual ICollection<Review> Reviews { get; set; }
     }
 }

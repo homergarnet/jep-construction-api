@@ -32,22 +32,33 @@ namespace jep_construction_api.Services
                 IsSuccess = false,
                 ApiMessage = string.Empty
             };
+            var isExistProjectName = db.ProjectManagements.Any(z => z.ProjectName.Equals(req.ProjectName));
+            if (isExistProjectName)
+            {
+                response.IsSuccess = false;
+                response.ApiMessage = ProjectManagementConstants.PROJECT_NAME_ALREADY_EXIST;
+                return response;
+            }
+            else
+            {
 
-            ProjectManagement projectManagement = new ProjectManagement();
-            projectManagement.UserId = req.UserId;
-            projectManagement.ProjectName = req.ProjectName?.Trim() ?? "";
-            projectManagement.StartDate = req.StartDate;
-            projectManagement.EndDate = req.EndDate;
-            projectManagement.Budget = req.Budget;
-            projectManagement.Location = req.Location?.Trim() ?? "";
-            projectManagement.Description = req.Description?.Trim() ?? "";
-            projectManagement.CompletionStatus = req.CompletionStatus;
-            projectManagement.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
-            db.ProjectManagements.Add(projectManagement);
-            db.SaveChanges();
-            response.IsSuccess = true;
-            response.ApiMessage = ProjectManagementConstants.CREATE_PROJECT_MANAGEMENT_ACCOUNT_SUCCESS;
-            return response;
+                ProjectManagement projectManagement = new ProjectManagement();
+                projectManagement.UserId = req.UserId;
+                projectManagement.ProjectName = req.ProjectName?.Trim() ?? "";
+                projectManagement.StartDate = req.StartDate;
+                projectManagement.EndDate = req.EndDate;
+                projectManagement.Budget = req.Budget;
+                projectManagement.Location = req.Location?.Trim() ?? "";
+                projectManagement.Description = req.Description?.Trim() ?? "";
+                projectManagement.CompletionStatus = req.CompletionStatus;
+                projectManagement.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
+                db.ProjectManagements.Add(projectManagement);
+                db.SaveChanges();
+                response.IsSuccess = true;
+                response.ApiMessage = ProjectManagementConstants.CREATE_PROJECT_MANAGEMENT_ACCOUNT_SUCCESS;
+                return response;
+            }
+
 
         }
 
@@ -61,19 +72,17 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            try
+            if (id <= 0)
             {
-                if (id <= 0)
-                {
-                    response.ApiMessage = "Invalid Project ID.";
-                    return response;
-                }
+                response.ApiMessage = ProjectManagementConstants.INVALID_PROJECT_ID;
+                return response;
+            }
 
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    connection.Open();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
 
-                    var query = @"
+                var query = @"
                     SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
                     pm.CompletionStatus,
                     (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
@@ -81,26 +90,20 @@ namespace jep_construction_api.Services
                     INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
                     WHERE pm.Id = @Id";
 
-                    var projectManagement = connection.QueryFirstOrDefault<ProjectManagementDto>(query, new { Id = id });
+                var projectManagement = connection.QueryFirstOrDefault<ProjectManagementDto>(query, new { Id = id });
 
-                    if (projectManagement != null)
-                    {
-                        response.ProjectManagementList.Add(projectManagement);
-                        response.TotalRecords = 1;
-                        response.IsSuccess = true;
-                    }
-                    else
-                    {
-                        response.IsSuccess = false;
-                        response.ApiMessage = "Project id not found.";
-                    }
+                if (projectManagement != null)
+                {
+                    response.ProjectManagementList.Add(projectManagement);
+                    response.TotalRecords = 1;
+                    response.IsSuccess = true;
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.ApiMessage = ProjectManagementConstants.PROJECT_ID_NOT_FOUND;
                 }
             }
-            catch (Exception ex)
-            {
-                response.ApiMessage = ex.Message;
-            }
-
             return response;
 
         }
@@ -195,6 +198,7 @@ namespace jep_construction_api.Services
 
         public ProjectManagementResponse SoftDeleteProjectManagementById(string id)
         {
+
             var response = new ProjectManagementResponse
             {
                 ProjectManagementList = new List<ProjectManagementDto>(),
