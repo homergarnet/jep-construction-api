@@ -50,12 +50,12 @@ namespace jep_construction_api.Models
 
                 entity.Property(e => e.Message).IsUnicode(false);
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(50)
+                entity.Property(e => e.MobileNumber)
+                    .HasMaxLength(20)
                     .IsUnicode(false);
 
-                entity.Property(e => e.PhoneNumber)
-                    .HasMaxLength(20)
+                entity.Property(e => e.Name)
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity.Property(e => e.ProjectName)

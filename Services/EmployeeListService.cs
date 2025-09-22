@@ -145,24 +145,23 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            try
+
+            keyword = keyword ?? string.Empty;
+
+            using (var connection = new SqlConnection(_connectionString))
             {
-                keyword = keyword ?? string.Empty;
+                connection.Open();
 
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    // Total Count
-                    var countQuery = @"
+                // Total Count
+                var countQuery = @"
                         SELECT COUNT(*)
                         FROM [dbo].[User]
                         WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')";
 
-                    var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
+                var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
 
-                    // Paginated Data
-                    var dataQuery = @"
+                // Paginated Data
+                var dataQuery = @"
                 SELECT *
                 FROM [dbo].[User]
                 WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
@@ -170,22 +169,17 @@ namespace jep_construction_api.Services
                 OFFSET @Offset ROWS
                 FETCH NEXT @PageSize ROWS ONLY";
 
-                    var data = connection.Query<UserDto>(dataQuery, new
-                    {
-                        Keyword = keyword,
-                        Offset = (page - 1) * pageSize,
-                        PageSize = pageSize
-                    }).ToList();
+                var data = connection.Query<UserDto>(dataQuery, new
+                {
+                    Keyword = keyword,
+                    Offset = (page - 1) * pageSize,
+                    PageSize = pageSize
+                }).ToList();
 
-                    // Set response
-                    response.UserList = data;
-                    response.TotalRecords = totalCount;
-                    response.IsSuccess = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                response.ApiMessage = ex.Message;
+                // Set response
+                response.UserList = data;
+                response.TotalRecords = totalCount;
+                response.IsSuccess = true;
             }
 
             return response;

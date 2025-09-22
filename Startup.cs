@@ -95,6 +95,8 @@ namespace jep_construction_api
             services.AddTransient<IEmployeeListService, EmployeeListService>();
             services.AddTransient<IProjectManagementService, ProjectManagementService>();
             services.AddTransient<IReviewService, ReviewService>();
+            services.AddTransient<IClientRequestService, ClientRequestService>();
+            services.AddTransient<IInventoryService, InventoryService>();
             // services.AddTransient<IEmailService, EmailService>();
             // services.AddTransient<IEmailTemplateService, EmailTemplateService>();
             // services.AddTransient<IRoleService, RoleService>();

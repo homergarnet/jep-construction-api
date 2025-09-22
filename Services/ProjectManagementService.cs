@@ -118,27 +118,26 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            try
+
+            keyword = keyword ?? string.Empty;
+
+            using (var connection = new SqlConnection(_connectionString))
             {
-                keyword = keyword ?? string.Empty;
+                connection.Open();
 
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    // Total Count
-                    var countQuery = @"
+                // Total Count
+                var countQuery = @"
                         SELECT COUNT(*)
                         FROM [dbo].[ProjectManagement]
                         WHERE (@Keyword = '' OR ProjectName LIKE '%' + @Keyword + '%')";
 
-                    var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
-                    var dataQuery = "";
-                    // if not admin
-                    if (userId != 0)
-                    {
-                        // Paginated Data
-                        dataQuery = @"
+                var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
+                var dataQuery = "";
+                // if not admin
+                if (userId != 0)
+                {
+                    // Paginated Data
+                    dataQuery = @"
                         SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
                                (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[ProjectManagement] pm
@@ -149,21 +148,21 @@ namespace jep_construction_api.Services
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
 
-                        var data = connection.Query<ProjectManagementDto>(dataQuery, new
-                        {
-                            Keyword = keyword,
-                            Offset = (page - 1) * pageSize,
-                            PageSize = pageSize,
-                            UserId = userId   // ✅ added
-                        }).ToList();
-
-                        response.ProjectManagementList = data;
-                    }
-                    // if admin
-                    else
+                    var data = connection.Query<ProjectManagementDto>(dataQuery, new
                     {
-                        // Paginated Data
-                        dataQuery = @"
+                        Keyword = keyword,
+                        Offset = (page - 1) * pageSize,
+                        PageSize = pageSize,
+                        UserId = userId
+                    }).ToList();
+
+                    response.ProjectManagementList = data;
+                }
+                // if admin
+                else
+                {
+                    // Paginated Data
+                    dataQuery = @"
                         SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[ProjectManagement] pm
@@ -172,25 +171,20 @@ namespace jep_construction_api.Services
                         ORDER BY pm.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
-                        var data = connection.Query<ProjectManagementDto>(dataQuery, new
-                        {
-                            Keyword = keyword,
-                            Offset = (page - 1) * pageSize,
-                            PageSize = pageSize
-                        }).ToList();
+                    var data = connection.Query<ProjectManagementDto>(dataQuery, new
+                    {
+                        Keyword = keyword,
+                        Offset = (page - 1) * pageSize,
+                        PageSize = pageSize
+                    }).ToList();
 
-                        // Set response
-                        response.ProjectManagementList = data;
-                    }
-
-                    response.TotalRecords = totalCount;
-                    response.IsSuccess = true;
-
+                    // Set response
+                    response.ProjectManagementList = data;
                 }
-            }
-            catch (Exception ex)
-            {
-                response.ApiMessage = ex.Message;
+
+                response.TotalRecords = totalCount;
+                response.IsSuccess = true;
+
             }
 
             return response;
