@@ -24,6 +24,7 @@ namespace jep_construction_api
         public void ConfigureServices(IServiceCollection services)
         {
             var Cors = Configuration.GetSection("Cors");
+            services.AddSignalR();
             services.AddMemoryCache();
             services.AddControllers()
             .AddNewtonsoftJson(opt =>
@@ -109,6 +110,7 @@ namespace jep_construction_api
             services.AddTransient<IInventoryService, InventoryService>();
             services.AddTransient<IProfileService, ProfileService>();
             services.AddTransient<IAttendanceService, AttendanceService>();
+            services.AddTransient<IMessageService, MessageService>();
 
             services.Configure<FormOptions>(options =>
             {
@@ -191,7 +193,7 @@ namespace jep_construction_api
 
             app.UseEndpoints(endpoints =>
             {
-                //endpoints.MapHub<ChatHub>("/chatHub");
+                endpoints.MapHub<MessageHub>("/messagehub");
                 endpoints.MapControllers();
 
             });
