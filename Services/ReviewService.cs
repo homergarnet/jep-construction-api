@@ -123,17 +123,25 @@ namespace jep_construction_api.Services
                 {
                     connection.Open();
 
-                    // Total Count
-                    var countQuery = @"
-                        SELECT COUNT(*)
-                        FROM [dbo].[Review]
-                        WHERE (@Keyword = '' OR ReviewDescription LIKE '%' + @Keyword + '%')";
 
-                    var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
                     var dataQuery = "";
                     // if not admin
                     if (userId != 0)
                     {
+
+                        // Total Count
+                        var countQuery = @"
+                        SELECT COUNT(*)
+                        FROM [dbo].[Review] r
+                        INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
+                        INNER JOIN [dbo].[User] u ON u.Id = r.UserId
+                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') 
+                        AND pm.UserId = @UserId";
+                        var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                        {
+                            Keyword = keyword,
+                            UserId = userId
+                        });
                         // Paginated Data
                         dataQuery = @"
                         SELECT r.Id, r.Rate, r.ReviewDescription, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
@@ -156,10 +164,24 @@ namespace jep_construction_api.Services
                         }).ToList();
 
                         response.ReviewList = data;
+                        response.TotalRecords = totalCount;
+
                     }
                     // if admin
                     else
                     {
+                        // Total Count
+                        var countQuery = @"
+                        SELECT COUNT(*)
+                        FROM [dbo].[Review] r
+                        INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
+                        INNER JOIN [dbo].[User] u ON u.Id = r.UserId
+                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%')";
+                        var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                        {
+                            Keyword = keyword,
+
+                        });
                         // Paginated Data
                         dataQuery = @"
                         SELECT r.Id, r.Rate, r.ReviewDescription, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
@@ -180,9 +202,10 @@ namespace jep_construction_api.Services
 
                         // Set response
                         response.ReviewList = data;
+                        response.TotalRecords = totalCount;
                     }
 
-                    response.TotalRecords = totalCount;
+
                     response.IsSuccess = true;
 
                 }

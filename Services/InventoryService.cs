@@ -136,17 +136,24 @@ namespace jep_construction_api.Services
             {
                 connection.Open();
 
-                // Total Count
-                var countQuery = @"
-                        SELECT COUNT(*)
-                        FROM [dbo].[Inventory]
-                        WHERE (@Keyword = '' OR ItemName LIKE '%' + @Keyword + '%')";
 
-                var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
                 var dataQuery = "";
                 // if not admin
                 if (userId != 0)
                 {
+                    // Total Count
+                    var countQuery = @"
+                        SELECT COUNT(*)
+                        FROM [dbo].[Inventory] i
+                        INNER JOIN [dbo].[User] u ON u.Id = i.UserId
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
+                        AND i.UserId = @UserId";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                    {
+                        Keyword = keyword,
+                        UserId = userId
+                    });
                     // Paginated Data
                     dataQuery = @"
                         SELECT i.Id, i.UserId, i.ItemName, i.Category, i.Quantity, i.UnitOfMeasure, i.ReOrderLevel, i.ReOrderQuantity, i.Description,
@@ -168,9 +175,18 @@ namespace jep_construction_api.Services
 
                     // Set response
                     response.InventoryList = data;
+                    response.TotalRecords = totalCount;
                 }
                 else
                 {
+                    // Total Count
+                    var countQuery = @"
+                        SELECT COUNT(*)
+                        FROM [dbo].[Inventory] i
+                        INNER JOIN [dbo].[User] u ON u.Id = i.UserId
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
                     // Paginated Data
                     dataQuery = @"
                         SELECT i.Id, i.UserId, i.ItemName, i.Category, i.Quantity, i.UnitOfMeasure, i.ReOrderLevel, i.ReOrderQuantity, i.Description,
@@ -190,13 +206,11 @@ namespace jep_construction_api.Services
 
                     // Set response
                     response.InventoryList = data;
-
+                    response.TotalRecords = totalCount;
                 }
 
-
-
-                response.TotalRecords = totalCount;
                 response.IsSuccess = true;
+
             }
 
             return response;

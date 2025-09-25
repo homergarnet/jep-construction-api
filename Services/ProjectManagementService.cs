@@ -125,25 +125,35 @@ namespace jep_construction_api.Services
             {
                 connection.Open();
 
-                // Total Count
-                var countQuery = @"
-                        SELECT COUNT(*)
-                        FROM [dbo].[ProjectManagement]
-                        WHERE (@Keyword = '' OR ProjectName LIKE '%' + @Keyword + '%')";
 
-                var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
                 var dataQuery = "";
                 // if not admin
                 if (userId != 0)
                 {
-                    // Paginated Data
-                    dataQuery = @"
-                        SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
-                               (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+
+                    // Total Count
+                    var countQuery = @" SELECT COUNT(*)
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
                         WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') 
-                          AND pm.UserId = @UserId
+                        AND pm.UserId = @UserId";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery,
+                        new
+                        {
+                            Keyword = keyword,
+                            UserId = userId
+                        }
+                        );
+
+                    // Paginated Data
+                    dataQuery = @"
+                        SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
+                        pm.CompletionStatus,(COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                        FROM [dbo].[ProjectManagement] pm
+                        INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
+                        WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') 
+                        AND pm.UserId = @UserId
                         ORDER BY pm.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
@@ -157,10 +167,23 @@ namespace jep_construction_api.Services
                     }).ToList();
 
                     response.ProjectManagementList = data;
+                    response.TotalRecords = totalCount;
                 }
                 // if admin
                 else
                 {
+
+                    var countQuery = @" SELECT COUNT(*)
+                        FROM [dbo].[ProjectManagement] pm
+                        INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
+                        WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%')";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery,
+                        new
+                        {
+                            Keyword = keyword,
+                        }
+                        );
                     // Paginated Data
                     dataQuery = @"
                         SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
@@ -180,9 +203,10 @@ namespace jep_construction_api.Services
 
                     // Set response
                     response.ProjectManagementList = data;
+                    response.TotalRecords = totalCount;
+
                 }
 
-                response.TotalRecords = totalCount;
                 response.IsSuccess = true;
 
             }
