@@ -98,38 +98,32 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            try
+
+            if (id <= 0)
             {
-                if (id <= 0)
-                {
-                    response.ApiMessage = EmployeeListConstants.INVALID_EMPLOYEE_ID;
-                    return response;
-                }
-
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    connection.Open();
-
-                    var query = @"SELECT * FROM [dbo].[User] WHERE Id = @Id";
-
-                    var employee = connection.QueryFirstOrDefault<UserDto>(query, new { Id = id });
-
-                    if (employee != null)
-                    {
-                        response.UserList.Add(employee);
-                        response.TotalRecords = 1;
-                        response.IsSuccess = true;
-                    }
-                    else
-                    {
-                        response.IsSuccess = false;
-                        response.ApiMessage = EmployeeListConstants.EMPLOYEE_NOT_FOUND;
-                    }
-                }
+                response.ApiMessage = EmployeeListConstants.INVALID_EMPLOYEE_ID;
+                return response;
             }
-            catch (Exception ex)
+
+            using (var connection = new SqlConnection(_connectionString))
             {
-                response.ApiMessage = ex.Message;
+                connection.Open();
+
+                var query = @"SELECT * FROM [dbo].[User] WHERE Id = @Id";
+
+                var employee = connection.QueryFirstOrDefault<UserDto>(query, new { Id = id });
+
+                if (employee != null)
+                {
+                    response.UserList.Add(employee);
+                    response.TotalRecords = 1;
+                    response.IsSuccess = true;
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.ApiMessage = EmployeeListConstants.EMPLOYEE_NOT_FOUND;
+                }
             }
 
             return response;

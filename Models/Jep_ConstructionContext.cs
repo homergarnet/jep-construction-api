@@ -71,6 +71,16 @@ namespace jep_construction_api.Models
                     .IsRequired()
                     .HasDefaultValueSql("((1))");
 
+                entity.Property(e => e.Location)
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.TimeInOutImage).IsUnicode(false);
+
+                entity.Property(e => e.TimeInOutType)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.HasOne(d => d.Employee)
                     .WithMany(p => p.EmployeeAttendances)
                     .HasForeignKey(d => d.EmployeeId)
