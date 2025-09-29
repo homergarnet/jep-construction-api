@@ -131,6 +131,11 @@ namespace jep_construction_api.Services
 
         public EmployeeListResponse GetEmployeeList(string keyword, int page, int pageSize)
         {
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
             var response = new EmployeeListResponse
             {
                 UserList = new List<UserDto>(), // or UserList depending on your model
@@ -150,7 +155,7 @@ namespace jep_construction_api.Services
                 var countQuery = @"
                         SELECT COUNT(*)
                         FROM [dbo].[User]
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')";
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = 'employee' AND IsEnabled = 1";
 
                 var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
 
@@ -158,7 +163,7 @@ namespace jep_construction_api.Services
                 var dataQuery = @"
                 SELECT *
                 FROM [dbo].[User]
-                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
+                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = 'employee' AND IsEnabled = 1
                 ORDER BY Id DESC
                 OFFSET @Offset ROWS
                 FETCH NEXT @PageSize ROWS ONLY";
