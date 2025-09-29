@@ -100,6 +100,48 @@ namespace jep_construction_api.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        [Route("get-attendance-by-id")]
+        public IActionResult GetAttendanceById([FromQuery] long id = 0)
+        {
+
+            try
+            {
+
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var getAttendance = _iAttendanceService.GetAttendanceById(id);
+                if (!getAttendance.IsSuccess && getAttendance.ApiMessage.Equals(AttendanceConstants.INVALID_ATTENDANCE_ID)
+                    || getAttendance.ApiMessage.Equals(AttendanceConstants.ATTENDANCE_NOT_FOUND))
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 400,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(getAttendance)
+                    };
+                }
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(getAttendance)
+                };
+
+            }
+
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
+
+        }
+
+        [Authorize]
         [HttpPut]
         [Route("update-attendance")]
         public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceRequest req)
@@ -108,7 +150,7 @@ namespace jep_construction_api.Controllers
             {
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
                 var result = _iAttendanceService.UpdateAttendance(req);
-                if (!result.IsSuccess && result.ApiMessage.Equals(EmployeeListConstants.UPDATE_EMPLOYEE_FAILED))
+                if (!result.IsSuccess && result.ApiMessage.Equals(AttendanceConstants.UPDATE_ATTENDANCE_FAILED))
                 {
                     return new ContentResult
                     {
@@ -140,7 +182,7 @@ namespace jep_construction_api.Controllers
             {
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
                 var result = _iAttendanceService.SoftDeleteAttendanceById(id);
-                if (!result.IsSuccess && result.ApiMessage.Equals(EmployeeListConstants.SOFT_DELETE_EMPLOYEE_FAILED))
+                if (!result.IsSuccess && result.ApiMessage.Equals(AttendanceConstants.SOFT_DELETE_ATTENDANCE_FAILED))
                 {
                     return new ContentResult
                     {

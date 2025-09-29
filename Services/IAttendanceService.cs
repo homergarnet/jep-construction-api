@@ -6,6 +6,7 @@ namespace jep_construction_api.Services
     public interface IAttendanceService
     {
         Task<AttendanceResponse> CreateTimeInOut(CreateTimeInOutRequest req);
+        AttendanceResponse GetAttendanceById(long id);
         AttendanceResponse GetAttendanceList(string keyword, long? userId, int page, int pageSize);
         AttendanceResponse SoftDeleteAttendanceById(string id);
         AttendanceResponse UpdateAttendance(UpdateAttendanceRequest req);

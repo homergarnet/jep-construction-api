@@ -4,7 +4,7 @@
     {
         public long Id { get; set; }
         public string EmployeeNumber { get; set; }
-        public string ClientName { get; set; }
+        public string EmployeeName { get; set; }
         public string Location { get; set; }
         public DateTime TimeInOut { get; set; }
         public string TimeInOutType { get; set; }

@@ -99,6 +99,51 @@ namespace jep_construction_api.Services
 
         }
 
+        public AttendanceResponse GetAttendanceById(long id)
+        {
+            var response = new AttendanceResponse
+            {
+                AttendanceList = new List<AttendanceDto>(),
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+
+            if (id <= 0)
+            {
+                response.ApiMessage = AttendanceConstants.INVALID_ATTENDANCE_ID;
+                return response;
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                var query = @"SELECT ea.Id, ea.Location, ea.TimeInOut, ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
+                    FROM [dbo].[EmployeeAttendance] ea
+                    INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
+                    WHERE ea.Id = @Id";
+
+                var attendance = connection.QueryFirstOrDefault<AttendanceDto>(query, new { Id = id });
+
+                if (attendance != null)
+                {
+                    response.AttendanceList.Add(attendance);
+                    response.TotalRecords = 1;
+                    response.IsSuccess = true;
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.ApiMessage = AttendanceConstants.ATTENDANCE_NOT_FOUND;
+                }
+            }
+
+            return response;
+        }
+
         public AttendanceResponse GetAttendanceList(string keyword, long? userId, int page, int pageSize)
         {
             var response = new AttendanceResponse
@@ -133,7 +178,7 @@ namespace jep_construction_api.Services
 
                     // Paginated Data
                     dataQuery = @"SELECT ea.Id, ea.Location, ea.TimeInOut, ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
                     WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%')
@@ -169,7 +214,7 @@ namespace jep_construction_api.Services
 
                     // Paginated Data
                     dataQuery = @"SELECT ea.Id, ea.Location, ea.TimeInOut, ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
                     WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%')
