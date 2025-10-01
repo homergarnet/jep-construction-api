@@ -95,7 +95,7 @@ namespace jep_construction_api.Services
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE i.Id = @Id";
+                        WHERE i.Id = @Id AND i.IsEnabled = 1";
 
                     var employee = connection.QueryFirstOrDefault<InventoryDto>(query, new { Id = id });
 
@@ -122,6 +122,13 @@ namespace jep_construction_api.Services
 
         public InventoryResponse GetInventoryList(string keyword, long? userId, int page, int pageSize)
         {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
+
             var response = new InventoryResponse
             {
                 InventoryList = new List<InventoryDto>(), // or UserList depending on your model
@@ -147,7 +154,7 @@ namespace jep_construction_api.Services
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
                         WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
-                        AND i.UserId = @UserId";
+                        AND i.UserId = @UserId AND i.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
                     {
@@ -161,7 +168,7 @@ namespace jep_construction_api.Services
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
                         WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
-                        AND i.UserId = @UserId
+                        AND i.UserId = @UserId AND i.IsEnabled = 1
                         ORDER BY i.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
@@ -184,7 +191,7 @@ namespace jep_construction_api.Services
                         SELECT COUNT(*)
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')";
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%') AND i.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
                     // Paginated Data
@@ -193,7 +200,7 @@ namespace jep_construction_api.Services
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%') AND i.IsEnabled = 1
                         ORDER BY i.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
