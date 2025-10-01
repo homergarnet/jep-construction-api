@@ -84,7 +84,7 @@ namespace jep_construction_api.Services
                         FROM [dbo].[Review] r
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
                         INNER JOIN [dbo].[User] u ON u.Id = r.UserId
-                        AND r.Id = @Id";
+                        AND r.Id = @Id AND r.IsEnabled = 1";
 
                 var review = connection.QueryFirstOrDefault<ReviewDto>(query, new { Id = id });
 
@@ -136,7 +136,7 @@ namespace jep_construction_api.Services
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
                         INNER JOIN [dbo].[User] u ON u.Id = r.UserId
                         WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') 
-                        AND pm.UserId = @UserId";
+                        AND pm.UserId = @UserId AND r.IsEnabled = 1";
                         var totalCount = connection.ExecuteScalar<long>(countQuery, new
                         {
                             Keyword = keyword,
@@ -150,7 +150,7 @@ namespace jep_construction_api.Services
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
                         INNER JOIN [dbo].[User] u ON u.Id = r.UserId
                         WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') 
-                        AND pm.UserId = @UserId
+                        AND pm.UserId = @UserId AND r.IsEnabled = 1
                         ORDER BY r.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
@@ -176,7 +176,7 @@ namespace jep_construction_api.Services
                         FROM [dbo].[Review] r
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
                         INNER JOIN [dbo].[User] u ON u.Id = r.UserId
-                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%')";
+                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') AND r.IsEnabled = 1";
                         var totalCount = connection.ExecuteScalar<long>(countQuery, new
                         {
                             Keyword = keyword,
@@ -189,7 +189,7 @@ namespace jep_construction_api.Services
                         FROM [dbo].[Review] r
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
                         INNER JOIN [dbo].[User] u ON u.Id = r.UserId
-                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') 
+                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') AND r.IsEnabled = 1
                         ORDER BY r.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
