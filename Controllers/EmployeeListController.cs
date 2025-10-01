@@ -74,7 +74,7 @@ namespace jep_construction_api.Controllers
             {
 
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-                var getEmployeeList = _employeeListService.GetEmployeeList(keyword ?? "", page, pageSize);
+                var getEmployeeList = _employeeListService.GetEmployeeList(keyword ?? "", accountType, page, pageSize);
 
                 return new ContentResult
                 {

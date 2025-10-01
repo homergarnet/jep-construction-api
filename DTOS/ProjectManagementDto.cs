@@ -2,7 +2,8 @@
 {
     public class ProjectManagementDto
     {
-        public long ProjectId { get; set; }
+        public long Id { get; set; }
+        public long UserId { get; set; }
         public string ProjectName { get; set; }
         public string ClientName { get; set; }
         public DateTime StartDate { get; set; }

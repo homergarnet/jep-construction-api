@@ -83,9 +83,9 @@ namespace jep_construction_api.Services
                 connection.Open();
 
                 var query = @"
-                    SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
+                    SELECT pm.Id, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
                     pm.CompletionStatus,
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId
                     FROM [dbo].[ProjectManagement] pm
                     INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
                     WHERE pm.Id = @Id";
@@ -110,6 +110,12 @@ namespace jep_construction_api.Services
 
         public ProjectManagementResponse GetProjectManagementList(string keyword, long? userId, int page, int pageSize)
         {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
             var response = new ProjectManagementResponse
             {
                 ProjectManagementList = new List<ProjectManagementDto>(), // or UserList depending on your model
@@ -136,7 +142,7 @@ namespace jep_construction_api.Services
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
                         WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') 
-                        AND pm.UserId = @UserId";
+                        AND pm.UserId = @UserId AND pm.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery,
                         new
@@ -148,12 +154,12 @@ namespace jep_construction_api.Services
 
                     // Paginated Data
                     dataQuery = @"
-                        SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
-                        pm.CompletionStatus,(COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                        SELECT pm.Id, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
+                        pm.CompletionStatus,(COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
                         WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') 
-                        AND pm.UserId = @UserId
+                        AND pm.UserId = @UserId AND pm.IsEnabled = 1
                         ORDER BY pm.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";
@@ -176,7 +182,7 @@ namespace jep_construction_api.Services
                     var countQuery = @" SELECT COUNT(*)
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
-                        WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%')";
+                        WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') AND pm.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery,
                         new
@@ -186,11 +192,11 @@ namespace jep_construction_api.Services
                         );
                     // Paginated Data
                     dataQuery = @"
-                        SELECT pm.Id AS ProjectId, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
-                        (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                        SELECT pm.Id, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
+                        (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
-                        WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%')
+                        WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') AND pm.IsEnabled = 1
                         ORDER BY pm.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";

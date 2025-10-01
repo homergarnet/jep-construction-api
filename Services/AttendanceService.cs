@@ -175,7 +175,8 @@ namespace jep_construction_api.Services
                     // Total Count
                     var countQuery = @"SELECT COUNT(*) FROM [dbo].[EmployeeAttendance] ea 
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') AND ea.EmployeeId = @UserId";
+                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    AND ea.EmployeeId = @UserId AND ea.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
                     {
