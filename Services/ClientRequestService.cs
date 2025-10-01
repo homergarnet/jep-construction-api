@@ -112,6 +112,12 @@ namespace jep_construction_api.Services
 
         public ClientRequestResponse GetClientRequestList(string keyword, int page, int pageSize)
         {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
             var response = new ClientRequestResponse
             {
                 ClientRequestList = new List<ClientRequestDto>(), // or UserList depending on your model
@@ -132,7 +138,7 @@ namespace jep_construction_api.Services
                     var countQuery = @"
                         SELECT COUNT(*)
                         FROM [dbo].[ClientRequest]
-                        WHERE (@Keyword = '' OR ProjectName LIKE '%' + @Keyword + '%')";
+                        WHERE (@Keyword = '' OR ProjectName LIKE '%' + @Keyword + '%') AND IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
 
@@ -140,7 +146,7 @@ namespace jep_construction_api.Services
                     var dataQuery = @"
                     SELECT *
                     FROM [dbo].[ClientRequest]
-                    WHERE (@Keyword = '' OR ProjectName LIKE '%' + @Keyword + '%')
+                    WHERE (@Keyword = '' OR ProjectName LIKE '%' + @Keyword + '%') AND IsEnabled = 1
                     ORDER BY Id DESC
                     OFFSET @Offset ROWS
                     FETCH NEXT @PageSize ROWS ONLY";
@@ -183,7 +189,7 @@ namespace jep_construction_api.Services
                 connection.Open();
                 var sql = @"UPDATE [dbo].[ClientRequest] 
                             SET IsEnabled = 0
-                            WHERE Id = @Id";
+                            WHERE Id = @Id AND IsEnabled = 1";
                 int rowsAffected = connection.Execute(sql, new { Id = id });
                 if (rowsAffected > 0)
                 {
