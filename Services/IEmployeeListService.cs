@@ -9,7 +9,7 @@ namespace jep_construction_api.Services
 
         EmployeeListResponse CreateEmployee(CreateUpdateEmployeeRequest createEmployeeReq);
         EmployeeListResponse GetEmployeeById(long id);
-        EmployeeListResponse GetEmployeeList(string keyword, int page, int pageSize);
+        EmployeeListResponse GetEmployeeList(string keyword, string? accountType, int page, int pageSize);
         EmployeeListResponse SoftDeleteEmployeeById(string id);
         EmployeeListResponse UpdateEmployee(CreateUpdateEmployeeRequest updateEmployeeReq);
     }

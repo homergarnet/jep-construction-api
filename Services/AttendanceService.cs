@@ -120,7 +120,8 @@ namespace jep_construction_api.Services
             {
                 connection.Open();
 
-                var query = @"SELECT ea.Id, ea.Location, ea.TimeInOut, ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
+                var query = @"SELECT ea.Id, ea.Location, FORMAT(ea.TimeInOut, 'MM/dd/yyyy hh:mm tt') AS TimeInOut, 
+                    ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
                     (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
@@ -146,6 +147,12 @@ namespace jep_construction_api.Services
 
         public AttendanceResponse GetAttendanceList(string keyword, long? userId, int page, int pageSize)
         {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
             var response = new AttendanceResponse
             {
                 AttendanceList = new List<AttendanceDto>(), // or UserList depending on your model
@@ -177,11 +184,13 @@ namespace jep_construction_api.Services
                     });
 
                     // Paginated Data
-                    dataQuery = @"SELECT ea.Id, ea.Location, ea.TimeInOut, ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
+                    dataQuery = @"SELECT ea.Id, ea.Location, FORMAT(ea.TimeInOut, 'MM/dd/yyyy hh:mm tt') AS TimeInOut, 
+                    ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
                     (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%')
+                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    AND ea.IsEnabled = 1
                     AND ea.EmployeeId = @UserId
                     ORDER BY ea.Id DESC
                     OFFSET @Offset ROWS
@@ -205,7 +214,8 @@ namespace jep_construction_api.Services
                     // Total Count
                     var countQuery = @"SELECT COUNT(*) FROM [dbo].[EmployeeAttendance] ea 
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%')";
+                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    AND ea.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
                     {
@@ -213,11 +223,13 @@ namespace jep_construction_api.Services
                     });
 
                     // Paginated Data
-                    dataQuery = @"SELECT ea.Id, ea.Location, ea.TimeInOut, ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
+                    dataQuery = @"SELECT ea.Id, ea.Location, FORMAT(ea.TimeInOut, 'MM/dd/yyyy hh:mm tt') AS TimeInOut, 
+                    ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
                     (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%')
+                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    AND ea.IsEnabled = 1
                     ORDER BY ea.Id DESC
                     OFFSET @Offset ROWS
                     FETCH NEXT @PageSize ROWS ONLY";

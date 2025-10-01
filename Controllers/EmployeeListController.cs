@@ -66,7 +66,7 @@ namespace jep_construction_api.Controllers
         [HttpGet]
         [Route("get-employee-list")]
         public IActionResult GetEmployeeList(
-            [FromQuery] string? keyword = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+            [FromQuery] string? keyword = "", [FromQuery] string? accountType = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
 

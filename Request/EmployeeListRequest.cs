@@ -15,6 +15,7 @@
         public decimal Salary { get; set; }
         public string Status { get; set; }
         public string Address { get; set; }
+        public string AccountType { get; set; }
         public DateTime DateOfBirth { get; set; }
     }
 }

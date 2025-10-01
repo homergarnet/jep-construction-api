@@ -76,7 +76,7 @@ namespace jep_construction_api.Services
                 user.Password = BCrypt.Net.BCrypt.HashPassword(configuration["DefaultPassword:Password"]);
                 user.Address = createEmployeeReq.Address?.Trim() ?? "";
                 user.DateOfBirth = createEmployeeReq.DateOfBirth;
-                user.UserType = "employee";
+                user.UserType = createEmployeeReq.AccountType?.Trim() ?? "";
                 user.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
                 db.Users.Add(user);
                 db.SaveChanges();
@@ -129,7 +129,7 @@ namespace jep_construction_api.Services
             return response;
         }
 
-        public EmployeeListResponse GetEmployeeList(string keyword, int page, int pageSize)
+        public EmployeeListResponse GetEmployeeList(string keyword, string? accountType, int page, int pageSize)
         {
             if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
             {
@@ -144,7 +144,6 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-
             keyword = keyword ?? string.Empty;
 
             using (var connection = new SqlConnection(_connectionString))
@@ -155,15 +154,19 @@ namespace jep_construction_api.Services
                 var countQuery = @"
                         SELECT COUNT(*)
                         FROM [dbo].[User]
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = 'employee' AND IsEnabled = 1";
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = @AccountType AND IsEnabled = 1";
 
-                var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
+                var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                {
+                    Keyword = keyword,
+                    accountType = accountType
+                });
 
                 // Paginated Data
                 var dataQuery = @"
                 SELECT *
                 FROM [dbo].[User]
-                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = 'employee' AND IsEnabled = 1
+                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = @AccountType AND IsEnabled = 1
                 ORDER BY Id DESC
                 OFFSET @Offset ROWS
                 FETCH NEXT @PageSize ROWS ONLY";
@@ -172,7 +175,8 @@ namespace jep_construction_api.Services
                 {
                     Keyword = keyword,
                     Offset = (page - 1) * pageSize,
-                    PageSize = pageSize
+                    PageSize = pageSize,
+                    accountType = accountType,
                 }).ToList();
 
                 // Set response
