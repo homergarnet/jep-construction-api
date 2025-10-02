@@ -98,7 +98,7 @@ namespace jep_construction_api.Services
             using var connection = new SqlConnection(_connectionString);
             var dateTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"));
             profileQuery = @"UPDATE [dbo].[User] 
-                            SET Firstname = @Firstname, Lastname = @Lastname, MobileNumber = @MobileNumber,
+                            SET Firstname = @Firstname, Lastname = @Lastname, MobileNumber = @MobileNumber, Address = @Address,
                             DateOfBirth = @DateOfBirth, ProfileImage = @ProfileImage, Position = @Position,
                             DateTimeUpdated = @DateTimeUpdated
                             WHERE Id = @Id
@@ -110,6 +110,7 @@ namespace jep_construction_api.Services
                 FirstName = req.Firstname,
                 LastName = req.Lastname,
                 MobileNumber = req.MobileNumber,
+                Address = req.Address,
                 DateOfBirth = req.DateOfBirth,
                 ProfileImage = profileImagePath,
                 Position = req.Position,
