@@ -153,7 +153,7 @@ namespace jep_construction_api.Services
                         SELECT COUNT(*)
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
+                        WHERE (@Keyword = '' OR i.ItemName LIKE '%' + @Keyword + '%')
                         AND i.UserId = @UserId AND i.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
@@ -167,7 +167,7 @@ namespace jep_construction_api.Services
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%')
+                        WHERE (@Keyword = '' OR i.ItemName LIKE '%' + @Keyword + '%')
                         AND i.UserId = @UserId AND i.IsEnabled = 1
                         ORDER BY i.Id DESC
                         OFFSET @Offset ROWS
@@ -191,7 +191,7 @@ namespace jep_construction_api.Services
                         SELECT COUNT(*)
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%') AND i.IsEnabled = 1";
+                        WHERE (@Keyword = '' OR i.ItemName LIKE '%' + @Keyword + '%') AND i.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new { Keyword = keyword });
                     // Paginated Data
@@ -200,7 +200,7 @@ namespace jep_construction_api.Services
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Inventory] i
                         INNER JOIN [dbo].[User] u ON u.Id = i.UserId
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%') AND i.IsEnabled = 1
+                        WHERE (@Keyword = '' OR i.ItemName LIKE '%' + @Keyword + '%') AND i.IsEnabled = 1
                         ORDER BY i.Id DESC
                         OFFSET @Offset ROWS
                         FETCH NEXT @PageSize ROWS ONLY";

@@ -175,7 +175,8 @@ namespace jep_construction_api.Services
                     // Total Count
                     var countQuery = @"SELECT COUNT(*) FROM [dbo].[EmployeeAttendance] ea 
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
                     AND ea.EmployeeId = @UserId AND ea.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
@@ -190,7 +191,8 @@ namespace jep_construction_api.Services
                     (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
                     AND ea.IsEnabled = 1
                     AND ea.EmployeeId = @UserId
                     ORDER BY ea.Id DESC
@@ -215,7 +217,8 @@ namespace jep_construction_api.Services
                     // Total Count
                     var countQuery = @"SELECT COUNT(*) FROM [dbo].[EmployeeAttendance] ea 
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
                     AND ea.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
@@ -229,7 +232,8 @@ namespace jep_construction_api.Services
                     (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
                     FROM [dbo].[EmployeeAttendance] ea
                     INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) LIKE '%' + @Keyword + '%') 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
                     AND ea.IsEnabled = 1
                     ORDER BY ea.Id DESC
                     OFFSET @Offset ROWS
