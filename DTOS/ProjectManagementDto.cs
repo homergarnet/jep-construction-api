@@ -4,6 +4,7 @@
     {
         public long Id { get; set; }
         public long UserId { get; set; }
+        public long ReviewId { get; set; }
         public string ProjectName { get; set; }
         public string ClientName { get; set; }
         public DateTime StartDate { get; set; }

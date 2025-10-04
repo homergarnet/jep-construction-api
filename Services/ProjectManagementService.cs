@@ -155,9 +155,10 @@ namespace jep_construction_api.Services
                     // Paginated Data
                     dataQuery = @"
                         SELECT pm.Id, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, 
-                        pm.CompletionStatus,(COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId
+                        pm.CompletionStatus,(COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId, r.Id AS ReviewId
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
+                        LEFT JOIN [dbo].[Review] r ON r.ProjectManagementId = pm.Id
                         WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') 
                         AND pm.UserId = @UserId AND pm.IsEnabled = 1
                         ORDER BY pm.Id DESC
@@ -182,6 +183,7 @@ namespace jep_construction_api.Services
                     var countQuery = @" SELECT COUNT(*)
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
+                        LEFT JOIN [dbo].[Review] r ON r.ProjectManagementId = pm.Id
                         WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') AND pm.IsEnabled = 1";
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery,
@@ -193,9 +195,10 @@ namespace jep_construction_api.Services
                     // Paginated Data
                     dataQuery = @"
                         SELECT pm.Id, pm.ProjectName, pm.StartDate, pm.EndDate, pm.Budget, pm.Location, pm.Description, pm.CompletionStatus,
-                        (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId
+                        (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, u.Id AS UserId, r.Id AS ReviewId
                         FROM [dbo].[ProjectManagement] pm
                         INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
+                        LEFT JOIN [dbo].[Review] r ON r.ProjectManagementId = pm.Id
                         WHERE (@Keyword = '' OR pm.ProjectName LIKE '%' + @Keyword + '%') AND pm.IsEnabled = 1
                         ORDER BY pm.Id DESC
                         OFFSET @Offset ROWS
