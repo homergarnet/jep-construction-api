@@ -8,7 +8,6 @@
     {
         public long EmployeeId { get; set; }
         public string Location { get; set; }
-        public string TimeInOut { get; set; }
         public string TimeInOutType { get; set; }
         public string TimeInOutImage { get; set; } // base64 string
     }
