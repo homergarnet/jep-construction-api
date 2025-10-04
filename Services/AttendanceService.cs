@@ -74,7 +74,7 @@ namespace jep_construction_api.Services
                 {
                     EmployeeId = req.EmployeeId,
                     Location = req.Location,
-                    TimeInOut = req.TimeInOut,
+                    TimeInOut = Common.DateTimeNow("Singapore Standard Time"),
                     TimeInOutType = req.TimeInOutType,
                     TimeInOutImage = $"uploads\\{fileName}",
                     DateTimeCreated = Common.DateTimeNow("Singapore Standard Time")
