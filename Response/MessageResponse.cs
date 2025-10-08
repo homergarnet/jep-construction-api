@@ -9,4 +9,13 @@ namespace jep_construction_api.Response
         public bool IsSuccess { get; set; }
         public string ApiMessage { get; set; }
     }
+
+    public class ConvoResponse
+    {
+        public List<ConvoDto> ConvoList { get; set; }
+        public long TotalRecords { get; set; }
+        public bool IsSuccess { get; set; }
+        public string ApiMessage { get; set; }
+    }
+
 }

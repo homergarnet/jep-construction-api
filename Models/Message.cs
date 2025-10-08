@@ -10,6 +10,7 @@ namespace jep_construction_api.Models
         public long SenderId { get; set; }
         public long? ReceiverId { get; set; }
         public string Message1 { get; set; } = null!;
+        public bool IsRead { get; set; }
         public bool? IsEnabled { get; set; }
         public DateTime DateTimeCreated { get; set; }
         public DateTime? DateTimeUpdated { get; set; }

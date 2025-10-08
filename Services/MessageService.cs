@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 using NuGet.Protocol.Plugins;
 using System.ComponentModel.DataAnnotations;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace jep_construction_api.Services
 {
@@ -60,8 +61,118 @@ namespace jep_construction_api.Services
 
         }
 
+        public ConvoResponse GetConvoRowList(long? userId, int page, int pageSize)
+        {
+            var response = new ConvoResponse
+            {
+                ConvoList = new List<ConvoDto>(), // or UserList depending on your model
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                // Total Count
+                var countQuery = @"
+                WITH Conversations AS (
+                    SELECT 
+                        CASE 
+                            WHEN SenderId = @UserId THEN ReceiverId 
+                            ELSE SenderId 
+                        END AS ConvoUserId,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY CASE 
+                                            WHEN SenderId = @UserId THEN ReceiverId 
+                                            ELSE SenderId 
+                                         END
+                            ORDER BY Id DESC
+                        ) AS rn
+                    FROM Message
+                    WHERE 
+                        (SenderId = @UserId OR ReceiverId = @UserId)
+                        AND IsEnabled = 1
+                )
+                SELECT COUNT(*) 
+                FROM Conversations
+                WHERE rn = 1;
+                ";
+
+                var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                {
+                    UserId = userId
+                });
+
+                // Paginated Data
+                var dataQuery = @"
+                WITH Conversations AS (
+                    SELECT 
+                        CASE 
+                            WHEN SenderId = @UserId THEN ReceiverId 
+                            ELSE SenderId 
+                        END AS ConvoUserId,
+                        Id,
+                        Message,
+                        IsRead,
+                        ReceiverId,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY CASE 
+                                            WHEN SenderId = @UserId THEN ReceiverId 
+                                            ELSE SenderId 
+                                         END
+                            ORDER BY Id DESC
+                        ) AS rn
+                    FROM Message
+                    WHERE 
+                        (SenderId = @UserId OR ReceiverId = @UserId)
+                        AND IsEnabled = 1
+                )
+                SELECT 
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ConvoName,
+                    u.ProfileImage AS ConvoImage,
+                    (SELECT COUNT(*) 
+                     FROM Message m 
+                     WHERE m.SenderId = c.ConvoUserId 
+                       AND m.ReceiverId = @UserId 
+                       AND m.IsRead = 0 
+                       AND m.IsEnabled = 1) AS UnreadCount,
+                    c.Message AS LastMessage,
+                    c.ConvoUserId
+                FROM Conversations c
+                INNER JOIN [dbo].[User] u 
+                    ON u.Id = c.ConvoUserId
+                WHERE c.rn = 1
+                ORDER BY c.Id DESC
+                OFFSET @Offset ROWS
+                FETCH NEXT @PageSize ROWS ONLY;
+                ";
+
+                var data = connection.Query<ConvoDto>(dataQuery, new
+                {
+                    Offset = (page - 1) * pageSize,
+                    PageSize = pageSize,
+                    UserId = userId
+                }).ToList();
+
+                // Set response
+                response.ConvoList = data;
+                response.TotalRecords = totalCount;
+                response.IsSuccess = true;
+            }
+
+            return response;
+        }
+
         public MessageResponse GetMessageList(string keyword, long userId, int page, int pageSize)
         {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
+
             var response = new MessageResponse
             {
                 MessageList = new List<MessageDto>(), // or UserList depending on your model
@@ -80,8 +191,9 @@ namespace jep_construction_api.Services
                 // Total Count
                 var countQuery = @"
                         SELECT COUNT(*)
-                        FROM [dbo].[Message]
-                        WHERE (@Keyword = '' OR Message LIKE '%' + @Keyword + '%') AND (SenderId = @UserId OR ReceiverId = @UserId)";
+                        FROM [dbo].[Message] m
+                INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
+                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND (m.SenderId = @UserId OR m.ReceiverId = @UserId)";
 
                 var totalCount = connection.ExecuteScalar<long>(countQuery, new
                 {
@@ -91,10 +203,11 @@ namespace jep_construction_api.Services
 
                 // Paginated Data
                 var dataQuery = @"
-                SELECT *
-                FROM [dbo].[Message]
-                WHERE (@Keyword = '' OR Message LIKE '%' + @Keyword + '%') AND (SenderId = @UserId OR ReceiverId = @UserId)
-                ORDER BY Id DESC
+                SELECT m.UserId, m.SenderId, m.ReceiverId, m.Message, m.DateTimeCreated, u.ProfileImage
+                FROM [dbo].[Message] m
+                INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
+                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND (m.SenderId = @UserId OR m.ReceiverId = @UserId)
+                ORDER BY m.Id DESC
                 OFFSET @Offset ROWS
                 FETCH NEXT @PageSize ROWS ONLY";
 
@@ -113,6 +226,111 @@ namespace jep_construction_api.Services
             }
 
             return response;
+        }
+
+        public EmployeeListResponse GetMessageUserList(string keyword, long userId, int page, int pageSize)
+        {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
+            var response = new EmployeeListResponse
+            {
+                UserList = new List<UserDto>(), // or UserList depending on your model
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            keyword = keyword ?? string.Empty;
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                // Total Count
+                string countQuery = "";
+                long totalCount = 0;
+
+
+                countQuery = @"
+                        SELECT COUNT(*)
+                        FROM [dbo].[User]
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') 
+                        AND Id != @UserId AND IsEnabled = 1";
+
+                totalCount = connection.ExecuteScalar<long>(countQuery, new
+                {
+                    Keyword = keyword,
+                    UserId = userId
+                });
+
+
+
+                string dataQuery = "";
+                // Paginated Data
+
+                dataQuery = @"
+                    SELECT *
+                    FROM [dbo].[User]
+                    WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND Id != @UserId 
+                    AND IsEnabled = 1
+                    ORDER BY Id DESC
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+
+
+                var data = connection.Query<UserDto>(dataQuery, new
+                {
+                    Keyword = keyword,
+                    Offset = (page - 1) * pageSize,
+                    PageSize = pageSize,
+                    UserId = userId
+                }).ToList();
+
+                // Set response
+                response.UserList = data;
+                response.TotalRecords = totalCount;
+                response.IsSuccess = true;
+            }
+
+            return response;
+
+        }
+
+        public MessageResponse SetReadById(long senderId, long userId)
+        {
+            var response = new MessageResponse
+            {
+                MessageList = new List<MessageDto>(),
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+
+                connection.Open();
+                var sql = @"UPDATE [dbo].[Message] 
+                            SET IsRead = 1
+                            WHERE UserId = @SenderId AND ReceiverId = @ReceiverId";
+                int rowsAffected = connection.Execute(sql, new { SenderId = senderId, ReceiverId = userId });
+                if (rowsAffected > 0)
+                {
+                    response.IsSuccess = true;
+                    response.ApiMessage = MessageConstants.SET_READ_BY_ID_SUCCESS;
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.ApiMessage = MessageConstants.SET_READ_BY_ID_FAILED;
+                }
+
+                return response;
+
+            }
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using jep_construction_api.Constants;
 using jep_construction_api.Library;
+using jep_construction_api.Models;
 using jep_construction_api.Request;
 using jep_construction_api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NuGet.Protocol.Plugins;
 using System.Text.Json;
 
 namespace jep_construction_api.Controllers
@@ -95,6 +97,108 @@ namespace jep_construction_api.Controllers
                 };
             }
 
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get-convo-row-list")]
+        public IActionResult GetConvoRowList(
+            [FromQuery] long userId = 1, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+        )
+        {
+
+            try
+            {
+
+                //var userId = User.FindFirst("UserId")?.Value;
+                var getConvoRowList = _iMessageService.GetConvoRowList(userId, page, pageSize);
+
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(getConvoRowList)
+                };
+
+            }
+
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
+
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get-message-user-list")]
+        public IActionResult GetMessageUserList(
+            [FromQuery] string? keyword = "", [FromQuery] long userId = 0,
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+        )
+        {
+
+            try
+            {
+
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var getMessageUserList = _iMessageService.GetMessageUserList(keyword ?? "", userId, page, pageSize);
+
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(getMessageUserList)
+                };
+
+            }
+
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
+
+        }
+
+        [Authorize]
+        [HttpPut("set-read-by-id/{senderId}/{userId}")]
+        public IActionResult SetReadById(long senderId, long userId)
+        {
+            try
+            {
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var result = _iMessageService.SetReadById(senderId, userId);
+                if (!result.IsSuccess && result.ApiMessage.Equals(MessageConstants.SET_READ_BY_ID_FAILED))
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 400,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(result)
+                    };
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
         }
 
     }
