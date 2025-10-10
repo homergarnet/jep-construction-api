@@ -68,15 +68,15 @@ namespace jep_construction_api.Controllers
         [HttpGet]
         [Route("get-message-list")]
         public IActionResult GetMessageList(
-            [FromQuery] string? keyword = "", [FromQuery] long userId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+            [FromQuery] string? keyword = "", [FromQuery] long convoUserId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
 
             try
             {
 
-                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
-                var getMessageList = _iMessageService.GetMessageList(keyword ?? "", userId, page, pageSize);
+                var userId = Convert.ToInt64(User.FindFirst("UserId")?.Value);
+                var getMessageList = _iMessageService.GetMessageList(keyword ?? "", userId, convoUserId, page, pageSize);
 
                 return new ContentResult
                 {
@@ -103,14 +103,14 @@ namespace jep_construction_api.Controllers
         [HttpGet]
         [Route("get-convo-row-list")]
         public IActionResult GetConvoRowList(
-            [FromQuery] long userId = 1, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+            [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
 
             try
             {
 
-                //var userId = User.FindFirst("UserId")?.Value;
+                var userId = Convert.ToInt64(User.FindFirst("UserId")?.Value);
                 var getConvoRowList = _iMessageService.GetConvoRowList(userId, page, pageSize);
 
                 return new ContentResult
@@ -138,15 +138,14 @@ namespace jep_construction_api.Controllers
         [HttpGet]
         [Route("get-message-user-list")]
         public IActionResult GetMessageUserList(
-            [FromQuery] string? keyword = "", [FromQuery] long userId = 0,
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+            [FromQuery] string? keyword = "", [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
 
             try
             {
 
-                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var userId = Convert.ToInt64(User.FindFirst("UserId")?.Value);
                 var getMessageUserList = _iMessageService.GetMessageUserList(keyword ?? "", userId, page, pageSize);
 
                 return new ContentResult
@@ -171,12 +170,12 @@ namespace jep_construction_api.Controllers
         }
 
         [Authorize]
-        [HttpPut("set-read-by-id/{senderId}/{userId}")]
-        public IActionResult SetReadById(long senderId, long userId)
+        [HttpPut("set-read-by-id/{senderId}")]
+        public IActionResult SetReadById(long senderId)
         {
             try
             {
-                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var userId = Convert.ToInt64(User.FindFirst("UserId")?.Value);
                 var result = _iMessageService.SetReadById(senderId, userId);
                 if (!result.IsSuccess && result.ApiMessage.Equals(MessageConstants.SET_READ_BY_ID_FAILED))
                 {

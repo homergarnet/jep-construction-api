@@ -7,7 +7,7 @@ namespace jep_construction_api.Services
     {
         MessageResponse CreateMessage(CreateMessageRequest req);
         ConvoResponse GetConvoRowList(long? userId, int page, int pageSize);
-        MessageResponse GetMessageList(string keyword, long userId, int page, int pageSize);
+        MessageResponse GetMessageList(string keyword, long userId, long convoUserId, int page, int pageSize);
         EmployeeListResponse GetMessageUserList(string keyword, long userId, int page, int pageSize);
         MessageResponse SetReadById(long senderId, long userId);
     }

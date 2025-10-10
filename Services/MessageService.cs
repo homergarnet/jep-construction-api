@@ -95,8 +95,10 @@ namespace jep_construction_api.Services
                         AND IsEnabled = 1
                 )
                 SELECT COUNT(*) 
-                FROM Conversations
-                WHERE rn = 1;
+                FROM Conversations c
+                INNER JOIN [dbo].[User] u 
+                    ON u.Id = c.ConvoUserId AND u.IsEnabled = 1
+                WHERE c.rn = 1;
                 ";
 
                 var totalCount = connection.ExecuteScalar<long>(countQuery, new
@@ -141,7 +143,7 @@ namespace jep_construction_api.Services
                     c.ConvoUserId
                 FROM Conversations c
                 INNER JOIN [dbo].[User] u 
-                    ON u.Id = c.ConvoUserId
+                    ON u.Id = c.ConvoUserId AND u.IsEnabled = 1
                 WHERE c.rn = 1
                 ORDER BY c.Id DESC
                 OFFSET @Offset ROWS
@@ -164,7 +166,7 @@ namespace jep_construction_api.Services
             return response;
         }
 
-        public MessageResponse GetMessageList(string keyword, long userId, int page, int pageSize)
+        public MessageResponse GetMessageList(string keyword, long userId, long convoUserId, int page, int pageSize)
         {
 
             if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
@@ -193,20 +195,25 @@ namespace jep_construction_api.Services
                         SELECT COUNT(*)
                         FROM [dbo].[Message] m
                 INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
-                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND (m.SenderId = @UserId OR m.ReceiverId = @UserId)";
+                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND 
+                ((m.SenderId = @UserId AND m.ReceiverId = @ConvoUserId)
+                OR (m.SenderId = @ConvoUserId AND m.ReceiverId = @UserId))";
 
                 var totalCount = connection.ExecuteScalar<long>(countQuery, new
                 {
                     Keyword = keyword,
-                    UserId = userId
+                    UserId = userId,
+                    ConvoUserId = convoUserId
                 });
 
                 // Paginated Data
                 var dataQuery = @"
-                SELECT m.UserId, m.SenderId, m.ReceiverId, m.Message, m.DateTimeCreated, u.ProfileImage
+                SELECT m.Id, m.UserId, m.SenderId, m.ReceiverId, m.Message, m.DateTimeCreated, u.ProfileImage
                 FROM [dbo].[Message] m
                 INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
-                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND (m.SenderId = @UserId OR m.ReceiverId = @UserId)
+                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND 
+                ((m.SenderId = @UserId AND m.ReceiverId = @ConvoUserId)
+                OR (m.SenderId = @ConvoUserId AND m.ReceiverId = @UserId))
                 ORDER BY m.Id DESC
                 OFFSET @Offset ROWS
                 FETCH NEXT @PageSize ROWS ONLY";
@@ -216,7 +223,8 @@ namespace jep_construction_api.Services
                     Keyword = keyword,
                     Offset = (page - 1) * pageSize,
                     PageSize = pageSize,
-                    UserId = userId
+                    UserId = userId,
+                    ConvoUserId = convoUserId
                 }).ToList();
 
                 // Set response
