@@ -68,7 +68,7 @@ namespace jep_construction_api.Controllers
         [HttpGet]
         [Route("get-message-list")]
         public IActionResult GetMessageList(
-            [FromQuery] string? keyword = "", [FromQuery] long convoUserId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+            [FromQuery] string? keyword = "", [FromQuery] long convoUserId = 0, [FromQuery] string orderBy = "ASC", [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
 
@@ -76,7 +76,7 @@ namespace jep_construction_api.Controllers
             {
 
                 var userId = Convert.ToInt64(User.FindFirst("UserId")?.Value);
-                var getMessageList = _iMessageService.GetMessageList(keyword ?? "", userId, convoUserId, page, pageSize);
+                var getMessageList = _iMessageService.GetMessageList(keyword ?? "", userId, convoUserId, orderBy, page, pageSize);
 
                 return new ContentResult
                 {

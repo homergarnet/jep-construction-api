@@ -41,24 +41,40 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            // user.Id = item.Id;
-            Models.Message message = new Models.Message();
-            message.UserId = req.UserId;
-            message.SenderId = req.SenderId;
-            message.ReceiverId = req.ReceiverId;
-            message.Message1 = req.Message?.Trim() ?? "";
-            message.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
+            var message = new Models.Message
+            {
+                UserId = req.UserId,
+                SenderId = req.SenderId,
+                ReceiverId = req.ReceiverId,
+                Message1 = req.Message?.Trim() ?? "",
+                DateTimeCreated = Common.DateTimeNow("Singapore Standard Time")
+            };
+
             db.Messages.Add(message);
-            db.SaveChanges();
+            db.SaveChanges(); // ✅ message.Id gets generated after this
+
+            // ✅ Add the message to MessageList in response
+            response.MessageList.Add(new MessageDto
+            {
+                Id = message.Id,
+                UserId = message.UserId,
+                SenderId = message.SenderId,
+                ReceiverId = message.ReceiverId,
+                Message = message.Message1,
+                DateTimeCreated = Common.DateTimeNow("Singapore Standard Time"),
+                ProfileImage = db.Users.Where(z => z.Id == message.SenderId).Select(z => z.ProfileImage).FirstOrDefault(),         // Fill if needed
+                IsEnabled = true           // Fill based on your logic
+            });
+
             response.IsSuccess = true;
             response.ApiMessage = MessageConstants.CREATE_MESSAGE_SUCCESS;
-            var roomId = MessageConstants.MESSAGE_ROOM_ID; // determine room id as per your app logic
-            // Since it's async, you can fire-and-forget like this (safe in non-critical cases)
+
+            // Optional: Send to SignalR clients
+            var roomId = MessageConstants.MESSAGE_ROOM_ID;
             _ = _messageHubContext.Clients.Group(roomId)
-                .SendAsync("SendMessage", roomId, req.UserId, req.SenderId, req.ReceiverId, req.Message);
+                .SendAsync("ReceiveMessage", roomId, req.UserId, req.SenderId, req.ReceiverId, req.Message);
 
             return response;
-
         }
 
         public ConvoResponse GetConvoRowList(long? userId, int page, int pageSize)
@@ -166,7 +182,7 @@ namespace jep_construction_api.Services
             return response;
         }
 
-        public MessageResponse GetMessageList(string keyword, long userId, long convoUserId, int page, int pageSize)
+        public MessageResponse GetMessageList(string keyword, long userId, long convoUserId, string orderBy, int page, int pageSize)
         {
 
             if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
@@ -206,31 +222,70 @@ namespace jep_construction_api.Services
                     ConvoUserId = convoUserId
                 });
 
-                // Paginated Data
-                var dataQuery = @"
-                SELECT m.Id, m.UserId, m.SenderId, m.ReceiverId, m.Message, m.DateTimeCreated, u.ProfileImage
-                FROM [dbo].[Message] m
-                INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
-                WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%') AND 
-                ((m.SenderId = @UserId AND m.ReceiverId = @ConvoUserId)
-                OR (m.SenderId = @ConvoUserId AND m.ReceiverId = @UserId))
-                ORDER BY m.Id DESC
-                OFFSET @Offset ROWS
-                FETCH NEXT @PageSize ROWS ONLY";
-
-                var data = connection.Query<MessageDto>(dataQuery, new
+                // Validate orderBy to prevent SQL Injection
+                string safeOrderBy = orderBy?.ToUpper() == "DESC" ? "DESC" : "ASC";
+                string dataQuery = "";
+                if (page == 112 && pageSize == 10)
                 {
-                    Keyword = keyword,
-                    Offset = (page - 1) * pageSize,
-                    PageSize = pageSize,
-                    UserId = userId,
-                    ConvoUserId = convoUserId
-                }).ToList();
+                    dataQuery = $@"
+                        SELECT *
+                        FROM (
+                            SELECT TOP (@PageSize)
+                            m.Id, m.UserId, m.SenderId, m.ReceiverId, m.Message, m.DateTimeCreated, u.ProfileImage
+                            FROM [dbo].[Message] m
+                            INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
+                            WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%')
+                            AND (
+                                (m.SenderId = @UserId AND m.ReceiverId = @ConvoUserId)
+                                OR
+                                (m.SenderId = @ConvoUserId AND m.ReceiverId = @UserId)
+                            )
+                            ORDER BY m.DateTimeCreated DESC  -- Get the latest messages
+                        ) AS LatestMessages
+                        ORDER BY DateTimeCreated ASC;        -- Display oldest to newest
+                    ";
+                    var data = connection.Query<MessageDto>(dataQuery, new
+                    {
+                        Keyword = keyword,
+                        PageSize = pageSize,
+                        UserId = userId,
+                        ConvoUserId = convoUserId
+                    }).ToList();
 
-                // Set response
-                response.MessageList = data;
-                response.TotalRecords = totalCount;
-                response.IsSuccess = true;
+                    // Set response
+                    response.MessageList = data;
+                    response.TotalRecords = totalCount;
+                    response.IsSuccess = true;
+                }
+                else
+                {
+                    //page = page - 1;
+                    // Paginated Data
+                    dataQuery = $@"
+                    SELECT m.Id, m.UserId, m.SenderId, m.ReceiverId, m.Message, m.DateTimeCreated, u.ProfileImage
+                    FROM [dbo].[Message] m
+                    INNER JOIN [dbo].[User] u ON u.Id = m.SenderId
+                    WHERE (@Keyword = '' OR m.Message LIKE '%' + @Keyword + '%')
+                      AND ((m.SenderId = @UserId AND m.ReceiverId = @ConvoUserId)
+                        OR (m.SenderId = @ConvoUserId AND m.ReceiverId = @UserId))
+                    ORDER BY m.Id {safeOrderBy}
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+                    var data = connection.Query<MessageDto>(dataQuery, new
+                    {
+                        Keyword = keyword,
+                        Offset = (page - 1) * pageSize,
+                        PageSize = pageSize,
+                        UserId = userId,
+                        ConvoUserId = convoUserId
+                    }).ToList();
+
+                    // Set response
+                    response.MessageList = data;
+                    response.TotalRecords = totalCount;
+                    response.IsSuccess = true;
+                }
+
             }
 
             return response;

@@ -5,10 +5,10 @@
         public long Id { get; set; }
         public long UserId { get; set; }
         public long SenderId { get; set; }
-        public long ReceiverId { get; set; }
+        public long? ReceiverId { get; set; }
         public string Message { get; set; }
         public string ProfileImage { get; set; }
-        public string IsEnabled { get; set; }
+        public bool IsEnabled { get; set; }
         public DateTime DateTimeCreated { get; set; }
     }
 
