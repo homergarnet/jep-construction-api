@@ -23,11 +23,11 @@ namespace barangay_crime_compliant_api.Hubs
         }
 
         // When a SYSTEM_GENERATED sends a skus that finished to be process, this will run
-        public async Task SendMessage(string roomId, long userId, long senderId, long receiverId, string message)
+        public async Task SendMessage(string roomId, long messageId, long userId, long senderId, long receiverId, string message, string profileImage, string dateTimeNow)
         {
             string connectionId = Context.ConnectionId;
             // Broadcast message to all clients in the specified room
-            await Clients.Group(roomId).SendAsync("ReceiveMessage", roomId, userId, senderId, receiverId, message);
+            await Clients.Group(roomId).SendAsync("ReceiveMessage", roomId, messageId, userId, senderId, receiverId, message, profileImage, dateTimeNow);
         }
 
         // When a user accesses the chat and reloads the tab, this will run

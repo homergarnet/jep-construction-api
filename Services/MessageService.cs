@@ -40,19 +40,19 @@ namespace jep_construction_api.Services
                 IsSuccess = false,
                 ApiMessage = string.Empty
             };
-
+            var dateTimeNow = Common.DateTimeNow("Singapore Standard Time");
             var message = new Models.Message
             {
                 UserId = req.UserId,
                 SenderId = req.SenderId,
                 ReceiverId = req.ReceiverId,
                 Message1 = req.Message?.Trim() ?? "",
-                DateTimeCreated = Common.DateTimeNow("Singapore Standard Time")
+                DateTimeCreated = dateTimeNow
             };
 
             db.Messages.Add(message);
             db.SaveChanges(); // ✅ message.Id gets generated after this
-
+            var profileImage = db.Users.Where(z => z.Id == message.SenderId).Select(z => z.ProfileImage).FirstOrDefault();
             // ✅ Add the message to MessageList in response
             response.MessageList.Add(new MessageDto
             {
@@ -61,8 +61,8 @@ namespace jep_construction_api.Services
                 SenderId = message.SenderId,
                 ReceiverId = message.ReceiverId,
                 Message = message.Message1,
-                DateTimeCreated = Common.DateTimeNow("Singapore Standard Time"),
-                ProfileImage = db.Users.Where(z => z.Id == message.SenderId).Select(z => z.ProfileImage).FirstOrDefault(),         // Fill if needed
+                DateTimeCreated = dateTimeNow,
+                ProfileImage = profileImage,         // Fill if needed
                 IsEnabled = true           // Fill based on your logic
             });
 
@@ -72,7 +72,7 @@ namespace jep_construction_api.Services
             // Optional: Send to SignalR clients
             var roomId = MessageConstants.MESSAGE_ROOM_ID;
             _ = _messageHubContext.Clients.Group(roomId)
-                .SendAsync("ReceiveMessage", roomId, req.UserId, req.SenderId, req.ReceiverId, req.Message);
+                .SendAsync("ReceiveMessage", roomId, message.Id, req.UserId, req.SenderId, req.ReceiverId, req.Message, profileImage, dateTimeNow.ToString());
 
             return response;
         }
