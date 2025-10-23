@@ -186,12 +186,12 @@ namespace jep_construction_api
 
             //app.UseDefaultFiles();
             //app.UseStaticFiles();
-            //app.UseStaticFiles(new StaticFileOptions
+            //app.UseStaticFiles(new StaticFileOptions()
             //{
-            //    FileProvider = new PhysicalFileProvider(
-            //    Path.Combine(Directory.GetCurrentDirectory(), "uploads")),
-            //            RequestPath = "/uploads"
+            //    FileProvider = new PhysicalFileProvider(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, @"uploads")),
+            //    RequestPath = new PathString("/uploads")
             //});
+
             // for single host of web and api end
 
 

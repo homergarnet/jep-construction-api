@@ -72,7 +72,7 @@ namespace jep_construction_api.Services
             // Optional: Send to SignalR clients
             var roomId = MessageConstants.MESSAGE_ROOM_ID;
             _ = _messageHubContext.Clients.Group(roomId)
-                .SendAsync("ReceiveMessage", roomId, message.Id, req.UserId, req.SenderId, req.ReceiverId, req.Message, profileImage, dateTimeNow.ToString());
+                .SendAsync("ReceiveMessage", roomId, message.Id, req.UserId, req.SenderId, req.ReceiverId, req.Message, profileImage, dateTimeNow);
 
             return response;
         }
