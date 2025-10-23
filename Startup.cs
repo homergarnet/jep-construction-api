@@ -24,6 +24,10 @@ namespace jep_construction_api
         public void ConfigureServices(IServiceCollection services)
         {
             var Cors = Configuration.GetSection("Cors");
+            var origins = Cors.GetSection("Origins").Get<string[]>();
+            var headers = Cors.GetValue<string>("Headers");
+            var methods = Cors.GetValue<string>("Methods");
+
             services.AddSignalR();
             services.AddMemoryCache();
             services.AddControllers()
@@ -57,11 +61,23 @@ namespace jep_construction_api
             {
                 options.AddPolicy("allow-policy", policy =>
                 {
-                    policy
-                    .WithOrigins(Cors.GetSection("Origins").Value ?? "")
-                    .WithHeaders(Cors.GetSection("Headers").Value ?? "")
-                    .WithMethods(Cors.GetSection("Methods").Value ?? "")
-                    .AllowCredentials();
+                    // If Origins = "*", use AllowAnyOrigin(), otherwise WithOrigins()
+                    if (origins != null && origins.Length > 0 && origins[0] != "*")
+                        policy.WithOrigins(origins);
+                    else
+                        policy.AllowAnyOrigin();
+
+                    if (headers == "*")
+                        policy.AllowAnyHeader();
+                    else
+                        policy.WithHeaders(headers);
+
+                    if (methods == "*")
+                        policy.AllowAnyMethod();
+                    else
+                        policy.WithMethods(methods);
+
+                    policy.AllowCredentials();
                 });
             });
 
@@ -127,7 +143,7 @@ namespace jep_construction_api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-
+            app.UseCors("allow-policy");
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
@@ -143,7 +159,7 @@ namespace jep_construction_api
             }
 
             //app.UseHttpsRedirection();
-            //app.UseCors("allow-policy");
+
 
             app.UseRouting();
 
