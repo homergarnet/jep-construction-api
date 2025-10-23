@@ -166,27 +166,32 @@ namespace jep_construction_api
             //     RequestPath = new PathString("/uploads")
             // }); 
 
-            // for single host of web and api start
-            // app.Use(async (context, next) =>
+            //for single host of web and api start
+            //app.Use(async (context, next) =>
+            //{
 
-            // {
+            //    await next();
 
-            //     await next();
+            //    if (context.Response.StatusCode == 404 && !System.IO.Path.HasExtension(context.Request.Path.Value))
 
-            //     if (context.Response.StatusCode == 404 && !System.IO.Path.HasExtension(context.Request.Path.Value))
+            //    {
 
-            //     {
+            //        context.Request.Path = "/index.html";
 
-            //         context.Request.Path = "/index.html";
+            //        await next();
 
-            //         await next();
+            //    }
 
-            //     }
+            //});
 
-            // });
-
-            // app.UseDefaultFiles();
-            // app.UseStaticFiles();
+            //app.UseDefaultFiles();
+            //app.UseStaticFiles();
+            //app.UseStaticFiles(new StaticFileOptions
+            //{
+            //    FileProvider = new PhysicalFileProvider(
+            //    Path.Combine(Directory.GetCurrentDirectory(), "uploads")),
+            //            RequestPath = "/uploads"
+            //});
             // for single host of web and api end
 
 
@@ -200,6 +205,7 @@ namespace jep_construction_api
                 endpoints.MapControllers();
 
             });
+
         }
     }
 }
