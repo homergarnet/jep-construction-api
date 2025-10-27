@@ -9,5 +9,6 @@ namespace jep_construction_api.Services
         ClientRequestResponse GetClientRequestById(long id);
         ClientRequestResponse GetClientRequestList(string keyword, int page, int pageSize);
         ClientRequestResponse SoftDeleteClientRequestById(string id);
+        Task<ClientRequestResponse> SendEmail(EmailRequest req);
     }
 }

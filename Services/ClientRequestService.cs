@@ -5,7 +5,11 @@ using jep_construction_api.Library;
 using jep_construction_api.Models;
 using jep_construction_api.Request;
 using jep_construction_api.Response;
+using MailKit.Security;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
+using MimeKit;
 using System.ComponentModel.DataAnnotations;
 
 namespace jep_construction_api.Services
@@ -16,12 +20,13 @@ namespace jep_construction_api.Services
         private readonly Jep_ConstructionContext db;
         private readonly string _connectionString;
         private string crQuery = string.Empty;
-
-        public ClientRequestService(IConfiguration configuration, Jep_ConstructionContext db)
+        private readonly SmtpSettings _smtpSettings;
+        public ClientRequestService(IConfiguration configuration, Jep_ConstructionContext db, IOptions<SmtpSettings> smtpSettings)
         {
             this.configuration = configuration;
             this.db = db;
             _connectionString = configuration.GetConnectionString("Jep_Construction");
+            _smtpSettings = smtpSettings.Value;
         }
 
         public ClientRequestResponse CreateClientRequest(CreateUpdateClientRequest req)
@@ -46,7 +51,7 @@ namespace jep_construction_api.Services
                 response.IsSuccess = false;
                 response.ApiMessage = ClientRequestConstants.INVALID_EMAIL_ADDRESS;
                 return response;
-     
+
             }
 
             clientRequest.ProjectName = req.ProjectName?.Trim() ?? "";
@@ -169,6 +174,98 @@ namespace jep_construction_api.Services
                 response.ApiMessage = ex.Message;
             }
 
+            return response;
+
+        }
+
+        public async Task<ClientRequestResponse> SendEmail(EmailRequest req)
+        {
+            var response = new ClientRequestResponse
+            {
+                ClientRequestList = new List<ClientRequestDto>(),
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("App Sender", _smtpSettings.SmtpUsername));
+            message.To.Add(MailboxAddress.Parse(req.To));
+            message.Subject = req.Subject;
+
+            // Create HTML email with footer and image
+            var builder = new BodyBuilder();
+
+            // Optional: use plain text fallback for email clients that don’t support HTML
+            builder.TextBody = req.Body;
+
+            // Path to your footer image (update this path)
+            var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "jep_logo1.jpg");
+            if (System.IO.File.Exists(imagePath))
+            {
+                var image = builder.LinkedResources.Add(imagePath);
+                image.ContentId = MimeKit.Utils.MimeUtils.GenerateMessageId();
+
+                builder.HtmlBody = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <p>{req.Body}</p>
+                    <br/>
+                    <hr style='border:none; border-top:1px solid #ddd; margin:20px 0;'/>
+                    <div style='text-align:center;'>
+                        <img src='cid:{image.ContentId}' alt='Footer Image' style='width:120px; height:auto;'/>
+                        <p style='font-size:12px; color:#888; margin-top:10px;'>
+                            © 2025 Jep Construction. All rights reserved.<br/>
+                            <a href='https://jepconstruction-001-site1.stempurl.com' style='color:#007bff; text-decoration:none;'>Visit our website</a>
+                        </p>
+                    </div>
+                </div>";
+            }
+            else
+            {
+                // fallback if image is missing
+                builder.HtmlBody = $@"
+                <div style='font-family: Arial, sans-serif; color: #333;'>
+                    <p>{req.Body}</p>
+                    <br/>
+                    <hr style='border:none; border-top:1px solid #ddd; margin:20px 0;'/>
+                    <div style='text-align:center;'>
+                        <p style='font-size:12px; color:#888;'>
+                            © 2025 Jep Construction. All rights reserved.<br/>
+                            <a href='https://jepconstruction-001-site1.stempurl.com' style='color:#007bff; text-decoration:none;'>Visit our website</a>
+                        </p>
+                    </div>
+                </div>";
+            }
+
+            message.Body = builder.ToMessageBody();
+            using var client = new MailKit.Net.Smtp.SmtpClient();
+            await client.ConnectAsync(_smtpSettings.SmtpServer, _smtpSettings.SmtpPort, SecureSocketOptions.SslOnConnect);
+            await client.AuthenticateAsync(_smtpSettings.SmtpUsername, _smtpSettings.SmtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+
+                connection.Open();
+                var sql = @"UPDATE [dbo].[ClientRequest] 
+                            SET HasReply = 1
+                            WHERE Id = @Id AND IsEnabled = 1";
+                int rowsAffected = connection.Execute(sql, new { Id = req.Id });
+                if (rowsAffected > 0)
+                {
+                    response.IsSuccess = true;
+                    //response.ApiMessage = ClientRequestConstants.SOFT_DELETE_CLIENT_REQUEST_SUCCESS;
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    //response.ApiMessage = ClientRequestConstants.SOFT_DELETE_CLIENT_REQUEST_FAILED;
+                }
+
+            }
+            response.IsSuccess = true;
+            response.ApiMessage = "Email sent successfully!";
             return response;
 
         }
