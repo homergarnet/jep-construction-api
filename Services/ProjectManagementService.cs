@@ -47,10 +47,10 @@ namespace jep_construction_api.Services
                 projectManagement.ProjectName = req.ProjectName?.Trim() ?? "";
                 projectManagement.StartDate = req.StartDate;
                 projectManagement.EndDate = req.EndDate;
-                projectManagement.Budget = req.Budget;
+                //projectManagement.Budget = req.Budget;
                 projectManagement.Location = req.Location?.Trim() ?? "";
                 projectManagement.Description = req.Description?.Trim() ?? "";
-                projectManagement.CompletionStatus = req.CompletionStatus;
+                //projectManagement.CompletionStatus = req.CompletionStatus;
                 projectManagement.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
                 db.ProjectManagements.Add(projectManagement);
                 db.SaveChanges();
@@ -270,8 +270,7 @@ namespace jep_construction_api.Services
             using var connection = new SqlConnection(_connectionString);
             var dateTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"));
             pmQuery = @"UPDATE [dbo].[ProjectManagement] 
-                            SET ProjectName = @ProjectName, StartDate = @StartDate, EndDate = @EndDate, Budget = @Budget,
-                            Location = @Location, Description = @Description, CompletionStatus = @CompletionStatus,
+                            SET ProjectName = @ProjectName, StartDate = @StartDate, EndDate = @EndDate, Location = @Location, Description = @Description,
                             DateTimeUpdated = @DateTimeUpdated
                             WHERE Id = @Id
                             ";
@@ -282,10 +281,10 @@ namespace jep_construction_api.Services
                 ProjectName = req.ProjectName?.Trim() ?? "",
                 StartDate = req.StartDate,
                 EndDate = req.EndDate,
-                Budget = req.Budget,
+                //Budget = req.Budget,
                 Location = req.Location?.Trim() ?? "",
                 Description = req.Description?.Trim() ?? "",
-                CompletionStatus = req.CompletionStatus,
+                //CompletionStatus = req.CompletionStatus,
                 DateTimeUpdated = dateTimeNow,
             });
 
