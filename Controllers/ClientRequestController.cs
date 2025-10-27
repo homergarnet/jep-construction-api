@@ -2,6 +2,7 @@
 using jep_construction_api.DTOS;
 using jep_construction_api.Library;
 using jep_construction_api.Request;
+using jep_construction_api.Response;
 using jep_construction_api.Services;
 using MailKit.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 using System.Net.Mail;
 using System.Text.Json;
+using Twilio.Http;
 
 namespace jep_construction_api.Controllers
 {
@@ -179,26 +181,35 @@ namespace jep_construction_api.Controllers
         [HttpPost("send-email")]
         public async Task<IActionResult> SendEmail([FromBody] EmailRequest request)
         {
-
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("App Sender", _smtpSettings.SmtpUsername));
-            message.To.Add(MailboxAddress.Parse(request.To));
-            message.Subject = request.Subject;
-
-            // Create HTML email with footer and image
-            var builder = new BodyBuilder();
-
-            // Optional: use plain text fallback for email clients that don’t support HTML
-            builder.TextBody = request.Body;
-
-            // Path to your footer image (update this path)
-            var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "jep_logo1.jpg");
-            if (System.IO.File.Exists(imagePath))
+            var response = new ClientRequestResponse
             {
-                var image = builder.LinkedResources.Add(imagePath);
-                image.ContentId = MimeKit.Utils.MimeUtils.GenerateMessageId();
+                ClientRequestList = new List<ClientRequestDto>(),
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+            try
+            {
 
-                builder.HtmlBody = $@"
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("App Sender", _smtpSettings.SmtpUsername));
+                message.To.Add(MailboxAddress.Parse(request.To));
+                message.Subject = request.Subject;
+
+                // Create HTML email with footer and image
+                var builder = new BodyBuilder();
+
+                // Optional: use plain text fallback for email clients that don’t support HTML
+                builder.TextBody = request.Body;
+
+                // Path to your footer image (update this path)
+                var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "jep_logo1.jpg");
+                if (System.IO.File.Exists(imagePath))
+                {
+                    var image = builder.LinkedResources.Add(imagePath);
+                    image.ContentId = MimeKit.Utils.MimeUtils.GenerateMessageId();
+
+                    builder.HtmlBody = $@"
                 <div style='font-family: Arial, sans-serif; color: #333;'>
                     <p>{request.Body}</p>
                     <br/>
@@ -211,11 +222,11 @@ namespace jep_construction_api.Controllers
                         </p>
                     </div>
                 </div>";
-            }
-            else
-            {
-                // fallback if image is missing
-                builder.HtmlBody = $@"
+                }
+                else
+                {
+                    // fallback if image is missing
+                    builder.HtmlBody = $@"
                 <div style='font-family: Arial, sans-serif; color: #333;'>
                     <p>{request.Body}</p>
                     <br/>
@@ -227,22 +238,34 @@ namespace jep_construction_api.Controllers
                         </p>
                     </div>
                 </div>";
-            }
+                }
 
-            message.Body = builder.ToMessageBody();
-
-            try
-            {
+                message.Body = builder.ToMessageBody();
                 using var client = new MailKit.Net.Smtp.SmtpClient();
                 await client.ConnectAsync(_smtpSettings.SmtpServer, _smtpSettings.SmtpPort, SecureSocketOptions.SslOnConnect);
                 await client.AuthenticateAsync(_smtpSettings.SmtpUsername, _smtpSettings.SmtpPassword);
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
-                return Ok("Email sent successfully!");
+                response.IsSuccess = true;
+                response.ApiMessage = "Email sent successfully!";
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(response)
+                };
+       
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Error sending email: {ex.Message}");
+                response.IsSuccess = false;
+                response.ApiMessage = "Email sent failed!";
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
             }
 
         }
