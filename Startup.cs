@@ -1,4 +1,5 @@
 using barangay_crime_compliant_api.Hubs;
+using jep_construction_api.DTOS;
 using jep_construction_api.Models;
 using jep_construction_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -112,6 +113,7 @@ namespace jep_construction_api
                     }
                 };
             });
+            services.Configure<SmtpSettings>(Configuration.GetSection("SmtpSettings"));
             services.AddControllersWithViews()
                 .AddNewtonsoftJson(options =>
                 options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
@@ -207,7 +209,6 @@ namespace jep_construction_api
             //    FileProvider = new PhysicalFileProvider(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, @"uploads")),
             //    RequestPath = new PathString("/uploads")
             //});
-
             // for single host of web and api end
 
 

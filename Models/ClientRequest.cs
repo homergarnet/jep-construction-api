@@ -12,6 +12,7 @@ namespace jep_construction_api.Models
         public string MobileNumber { get; set; } = null!;
         public string Message { get; set; } = null!;
         public bool? IsEnabled { get; set; }
+        public bool HasReply { get; set; }
         public DateTime DateTimeCreated { get; set; }
     }
 }
