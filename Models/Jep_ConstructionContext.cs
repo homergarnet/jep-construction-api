@@ -16,6 +16,7 @@ namespace jep_construction_api.Models
         {
         }
 
+        public virtual DbSet<AssignProject> AssignProjects { get; set; } = null!;
         public virtual DbSet<ClientRequest> ClientRequests { get; set; } = null!;
         public virtual DbSet<EmployeeAttendance> EmployeeAttendances { get; set; } = null!;
         public virtual DbSet<EmployeePayslip> EmployeePayslips { get; set; } = null!;
@@ -36,6 +37,27 @@ namespace jep_construction_api.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<AssignProject>(entity =>
+            {
+                entity.ToTable("AssignProject");
+
+                entity.Property(e => e.IsEnabled)
+                    .IsRequired()
+                    .HasDefaultValueSql("((1))");
+
+                entity.HasOne(d => d.Project)
+                    .WithMany(p => p.AssignProjects)
+                    .HasForeignKey(d => d.ProjectId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_AssignProject_ProjectManagement");
+
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.AssignProjects)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_AssignProject_User");
+            });
+
             modelBuilder.Entity<ClientRequest>(entity =>
             {
                 entity.ToTable("ClientRequest");

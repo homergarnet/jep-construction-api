@@ -105,7 +105,7 @@ namespace jep_construction_api.Services
 
         }
 
-        public ReviewResponse GetReviewList(string keyword, long? userId, int page, int pageSize)
+        public ReviewResponse GetReviewList(string keyword, long? userId, bool? isApprove, int page, int pageSize)
         {
             var response = new ReviewResponse
             {
@@ -166,6 +166,46 @@ namespace jep_construction_api.Services
                         response.ReviewList = data;
                         response.TotalRecords = totalCount;
 
+                    }
+                    else if(isApprove != null)
+                    {
+                        // Total Count
+                        var countQuery = @"
+                        SELECT COUNT(*)
+                        FROM [dbo].[Review] r
+                        INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
+                        LEFT JOIN [dbo].[User] u ON u.Id = r.UserId
+                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') 
+                        AND r.IsEnabled = 1 AND r.IsApprove = @IsApprove";
+                        var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                        {
+                            Keyword = keyword,
+                            IsApprove = isApprove
+                        });
+                        // Paginated Data
+                        dataQuery = @"
+                        SELECT r.Id, r.Rate, r.ReviewDescription, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
+                        (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
+                        FROM [dbo].[Review] r
+                        INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
+                        LEFT JOIN [dbo].[User] u ON u.Id = r.UserId
+                        WHERE (@Keyword = '' OR r.ReviewDescription LIKE '%' + @Keyword + '%') 
+                        AND r.IsEnabled = 1 AND r.IsApprove = @IsApprove
+                        ORDER BY r.Id DESC
+                        OFFSET @Offset ROWS
+                        FETCH NEXT @PageSize ROWS ONLY";
+
+                        var data = connection.Query<ReviewDto>(dataQuery, new
+                        {
+                            Keyword = keyword,
+                            Offset = (page - 1) * pageSize,
+                            PageSize = pageSize,
+                            IsApprove = isApprove
+
+                        }).ToList();
+
+                        response.ReviewList = data;
+                        response.TotalRecords = totalCount;
                     }
                     // if admin
                     else
@@ -251,6 +291,45 @@ namespace jep_construction_api.Services
                 return response;
 
             }
+        }
+
+        public ReviewResponse UpdateApproveReviewPost(UpdateApproveReviewPostRequest req)
+        {
+            var response = new ReviewResponse
+            {
+                ReviewList = new List<ReviewDto>(),
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            using var connection = new SqlConnection(_connectionString);
+            var dateTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"));
+            reviewQuery = @"UPDATE [dbo].[Review] 
+                            SET IsApprove = @IsApprove, DateTimeUpdated = @DateTimeUpdated
+                            WHERE Id = @Id
+                            ";
+
+            var rowsInserted = connection.Execute(reviewQuery, new
+            {
+                Id = req.Id,
+                IsApprove = req.IsApprove,
+                DateTimeUpdated = dateTimeNow,
+            });
+
+            if (rowsInserted > 0)
+            {
+
+                response.IsSuccess = true;
+                response.ApiMessage = ReviewConstants.UPDATE_APPROVE_REVIEW_SUCCESS;
+
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.ApiMessage = ReviewConstants.UPDATE_APPROVE_REVIEW_FAILED;
+            }
+
+            return response;
         }
 
         public ReviewResponse UpdateReview(CreateUpdateReviewRequest req)

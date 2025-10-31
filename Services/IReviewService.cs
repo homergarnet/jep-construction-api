@@ -7,8 +7,9 @@ namespace jep_construction_api.Services
     {
         ReviewResponse CreateReview(CreateUpdateReviewRequest req);
         ReviewResponse GetReviewById(long id);
-        ReviewResponse GetReviewList(string keyword, long? userId, int page, int pageSize);
+        ReviewResponse GetReviewList(string keyword, long? userId, bool? isApprove, int page, int pageSize);
         ReviewResponse SoftDeleteReviewById(string id);
         ReviewResponse UpdateReview(CreateUpdateReviewRequest req);
+        ReviewResponse UpdateApproveReviewPost(UpdateApproveReviewPostRequest req);
     }
 }

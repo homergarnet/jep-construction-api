@@ -9,4 +9,11 @@
         public string ReviewDescription { get; set; }
 
     }
+
+    public class UpdateApproveReviewPostRequest
+    {
+        public int? Id { get; set; }
+        public bool IsApprove { get; set; }
+
+    }
 }

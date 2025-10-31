@@ -132,6 +132,7 @@ namespace jep_construction_api
             services.AddTransient<IProfileService, ProfileService>();
             services.AddTransient<IAttendanceService, AttendanceService>();
             services.AddTransient<IMessageService, MessageService>();
+            services.AddTransient<IAssignProjectService, AssignProjectService>();
 
             services.Configure<FormOptions>(options =>
             {

@@ -284,7 +284,7 @@ namespace jep_construction_api.Services
                 else
                 {
                     response.IsSuccess = false;
-                    response.ApiMessage = AttendanceConstants.SOFT_DELETE_ATTENDANCE_SUCCESS;
+                    response.ApiMessage = AttendanceConstants.SOFT_DELETE_ATTENDANCE_FAILED;
                 }
 
                 return response;

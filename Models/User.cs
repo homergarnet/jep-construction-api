@@ -7,6 +7,7 @@ namespace jep_construction_api.Models
     {
         public User()
         {
+            AssignProjects = new HashSet<AssignProject>();
             EmployeeAttendances = new HashSet<EmployeeAttendance>();
             EmployeePayslips = new HashSet<EmployeePayslip>();
             Inventories = new HashSet<Inventory>();
@@ -34,6 +35,7 @@ namespace jep_construction_api.Models
         public DateTime DateTimeCreated { get; set; }
         public DateTime? DateTimeUpdated { get; set; }
 
+        public virtual ICollection<AssignProject> AssignProjects { get; set; }
         public virtual ICollection<EmployeeAttendance> EmployeeAttendances { get; set; }
         public virtual ICollection<EmployeePayslip> EmployeePayslips { get; set; }
         public virtual ICollection<Inventory> Inventories { get; set; }

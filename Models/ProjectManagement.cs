@@ -7,6 +7,7 @@ namespace jep_construction_api.Models
     {
         public ProjectManagement()
         {
+            AssignProjects = new HashSet<AssignProject>();
             Reviews = new HashSet<Review>();
         }
 
@@ -24,6 +25,7 @@ namespace jep_construction_api.Models
         public DateTime? DateTimeUpdated { get; set; }
 
         public virtual User User { get; set; } = null!;
+        public virtual ICollection<AssignProject> AssignProjects { get; set; }
         public virtual ICollection<Review> Reviews { get; set; }
     }
 }
