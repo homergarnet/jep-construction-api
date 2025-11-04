@@ -154,7 +154,7 @@ namespace jep_construction_api.Services
                 var countQuery = @"
                         SELECT COUNT(*)
                         FROM [dbo].[User]
-                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = @AccountType AND IsEnabled = 1";
+                        WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%' OR EmployeeNumber LIKE '%' + @Keyword + '%') AND UserType = @AccountType AND IsEnabled = 1";
 
                 var totalCount = connection.ExecuteScalar<long>(countQuery, new
                 {
@@ -166,7 +166,9 @@ namespace jep_construction_api.Services
                 var dataQuery = @"
                 SELECT *
                 FROM [dbo].[User]
-                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR Status LIKE '%' + @Keyword + '%') AND UserType = @AccountType AND IsEnabled = 1
+                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR 
+                Status LIKE '%' + @Keyword + '%' OR EmployeeNumber LIKE '%' + @Keyword + '%') 
+                AND UserType = @AccountType AND IsEnabled = 1
                 ORDER BY Id DESC
                 OFFSET @Offset ROWS
                 FETCH NEXT @PageSize ROWS ONLY";

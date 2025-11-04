@@ -139,6 +139,49 @@ namespace jep_construction_api.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        [Route("get-project-id-by-cname-pname")]
+        public IActionResult GetProjectIdByCNamePName([FromQuery] string cName = "", [FromQuery] string pName = "")
+        {
+
+            try
+            {
+
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var getProjectIdByCNamePName = _iProjectManagementService.GetProjectIdByCNamePName(cName, pName);
+                if (!getProjectIdByCNamePName.IsSuccess &&
+                    getProjectIdByCNamePName.ApiMessage.Equals(ProjectManagementConstants.INVALID_PARAMETERS)
+                    || getProjectIdByCNamePName.ApiMessage.Equals(ProjectManagementConstants.PROJECT_ID_NOT_FOUND))
+                {
+                    return new ContentResult
+                    {
+                        StatusCode = 400,
+                        ContentType = "application/json",
+                        Content = JsonSerializer.Serialize(getProjectIdByCNamePName)
+                    };
+                }
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(getProjectIdByCNamePName)
+                };
+
+            }
+
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
+
+        }
+
+        [Authorize]
         [HttpPut]
         [Route("update-project-management")]
         public async Task<IActionResult> UpdateProjectManagement([FromBody] CreateUpdateProjectManagementRequest req)

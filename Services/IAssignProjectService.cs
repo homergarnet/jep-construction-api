@@ -10,5 +10,6 @@ namespace jep_construction_api.Services
         AssignProjectResponse GetAssignProjectById(long id);
         AssignProjectResponse UpdateAssignProject(AssignProjectCreateUpdateRequest req);
         AssignProjectResponse SoftDeleteAssignProjectById(string id);
+        CNamePNameResponse GetCNamePNameList(string keyword, long? userId, int page, int pageSize);
     }
 }

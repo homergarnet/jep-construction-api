@@ -7,6 +7,7 @@ namespace jep_construction_api.Services
     {
         ProjectManagementResponse CreateProjectManagement(CreateUpdateProjectManagementRequest req);
         ProjectManagementResponse GetProjectManagementById(long id);
+        ProjectManagementResponse GetProjectIdByCNamePName(string cName, string pName);
         ProjectManagementResponse GetProjectManagementList(string keyword, long? userId, int page, int pageSize);
         ProjectManagementResponse SoftDeleteProjectManagementById(string id);
         ProjectManagementResponse UpdateProjectManagement(CreateUpdateProjectManagementRequest req);

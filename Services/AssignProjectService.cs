@@ -88,13 +88,29 @@ namespace jep_construction_api.Services
                     INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
                     WHERE ap.IsEnabled = 1 AND ap.Id = @Id";
 
-                var query = @"SELECT ap.Id, ap.StartDate, ap.EndDate, ap.DateTimeCreated, ap.DateTimeUpdated, u.Email, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName, u.MobileNumber, u.ProfileImage,
-                    u.Position, pm.Location
-                    FROM [dbo].[AssignProject] ap
-                    INNER JOIN [dbo].[User] u ON u.Id = ap.UserId
-                    INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
-                    WHERE ap.IsEnabled = 1 AND ap.Id = @Id";
+                var query = @"
+                SELECT 
+                    ap.Id, 
+                    ap.UserId, 
+                    pm.Id AS ProjectId,
+                    (COALESCE(uClient.Firstname, '') + ' ' + COALESCE(uClient.Lastname, '')) AS ClientName,
+                    pm.ProjectName, 
+                    ap.StartDate, 
+                    ap.EndDate, 
+                    ap.DateTimeCreated, 
+                    ap.DateTimeUpdated, 
+                    u.Email, 
+                    u.EmployeeNumber, 
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName, 
+                    u.MobileNumber, 
+                    u.ProfileImage,
+                    u.Position, 
+                    pm.Location
+                FROM [dbo].[AssignProject] ap
+                INNER JOIN [dbo].[User] u ON u.Id = ap.UserId
+                INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
+                LEFT JOIN [dbo].[User] uClient ON uClient.Id = pm.UserId
+                WHERE ap.IsEnabled = 1 AND ap.Id = @Id";
                 var totalCount = connection.ExecuteScalar<long>(countQuery, new { Id = id });
                 var assignProject = connection.QueryFirstOrDefault<AssignProjectDto>(query, new { Id = id });
 
@@ -144,6 +160,7 @@ namespace jep_construction_api.Services
                     var countQuery = @"SELECT COUNT(*) FROM [dbo].[AssignProject] ap
                     INNER JOIN [dbo].[User] u ON u.Id = ap.UserId
                     INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
+                    LEFT JOIN [dbo].[User] uClient ON uClient.Id = pm.UserId
                     WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
                     OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%')
                     AND ap.IsEnabled = 1
@@ -156,12 +173,28 @@ namespace jep_construction_api.Services
                     });
 
                     // Paginated Data
-                    dataQuery = @"SELECT ap.Id, ap.StartDate, ap.EndDate, ap.DateTimeCreated, ap.DateTimeUpdated, u.Email, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName, u.MobileNumber, u.ProfileImage,
-                    u.Position, pm.Location
+                    dataQuery = @"
+                    SELECT 
+                    ap.Id, 
+                    ap.UserId, 
+                    pm.Id AS ProjectId,
+                    (COALESCE(uClient.Firstname, '') + ' ' + COALESCE(uClient.Lastname, '')) AS ClientName,
+                    pm.ProjectName, 
+                    ap.StartDate, 
+                    ap.EndDate, 
+                    ap.DateTimeCreated, 
+                    ap.DateTimeUpdated, 
+                    u.Email, 
+                    u.EmployeeNumber, 
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName, 
+                    u.MobileNumber, 
+                    u.ProfileImage,
+                    u.Position, 
+                    pm.Location
                     FROM [dbo].[AssignProject] ap
                     INNER JOIN [dbo].[User] u ON u.Id = ap.UserId
                     INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
+                    LEFT JOIN [dbo].[User] uClient ON uClient.Id = pm.UserId
                     WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
                     OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%')
                     AND ap.IsEnabled = 1
@@ -189,6 +222,7 @@ namespace jep_construction_api.Services
                     var countQuery = @"SELECT COUNT(*) FROM [dbo].[AssignProject] ap
                     INNER JOIN [dbo].[User] u ON u.Id = ap.UserId
                     INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
+                    LEFT JOIN [dbo].[User] uClient ON uClient.Id = pm.UserId
                     WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
                     OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%')
                     AND ap.IsEnabled = 1";
@@ -199,12 +233,28 @@ namespace jep_construction_api.Services
                     });
 
                     // Paginated Data
-                    dataQuery = @"SELECT ap.Id, ap.StartDate, ap.EndDate, ap.DateTimeCreated, ap.DateTimeUpdated, u.Email, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName, u.MobileNumber, u.ProfileImage,
-                    u.Position, pm.Location
+                    dataQuery = @"
+                    SELECT 
+                    ap.Id, 
+                    u.Id AS UserId, 
+                    pm.Id AS ProjectId,
+                    (COALESCE(uClient.Firstname, '') + ' ' + COALESCE(uClient.Lastname, '')) AS ClientName,
+                    pm.ProjectName, 
+                    ap.StartDate, 
+                    ap.EndDate, 
+                    ap.DateTimeCreated, 
+                    ap.DateTimeUpdated, 
+                    u.Email, 
+                    u.EmployeeNumber, 
+                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName, 
+                    u.MobileNumber, 
+                    u.ProfileImage,
+                    u.Position, 
+                    pm.Location
                     FROM [dbo].[AssignProject] ap
                     INNER JOIN [dbo].[User] u ON u.Id = ap.UserId
                     INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = ap.ProjectId
+                    LEFT JOIN [dbo].[User] uClient ON uClient.Id = pm.UserId
                     WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
                     OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%')
                     AND ap.IsEnabled = 1
@@ -229,6 +279,110 @@ namespace jep_construction_api.Services
             }
 
             return response;
+        }
+
+        public CNamePNameResponse GetCNamePNameList(string keyword, long? userId, int page, int pageSize)
+        {
+
+            if (!string.IsNullOrWhiteSpace(keyword) && keyword.Equals("not/a"))
+            {
+                // no keyword filter → return all employees (paged)
+                keyword = "";
+            }
+            var response = new CNamePNameResponse
+            {
+                CNamePNameList = new List<CNamePNameDto>(), // or UserList depending on your model
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            keyword = keyword ?? string.Empty;
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+
+                connection.Open();
+                var dataQuery = "";
+                if (userId != 0)
+                {
+
+                    // Total Count
+                    var countQuery = @"SELECT COUNT(*) FROM [dbo].[ProjectManagement] pm
+                    INNER JOIN [dbo].[User] u ON u.Id = pm.UserId 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%') AND pm.IsEnabled = 1 AND u.Id = @UserId";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                    {
+                        Keyword = keyword,
+                        UserId = userId,
+                    });
+
+                    // Paginated Data
+                    dataQuery = @"SELECT pm.Id, pm.UserId, (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, pm.ProjectName
+                    FROM [dbo].[ProjectManagement] pm
+                    INNER JOIN [dbo].[User] u ON u.Id = pm.UserId 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%') AND pm.IsEnabled = 1 AND u.Id = @UserId
+                    ORDER BY pm.Id DESC
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+
+                    var data = connection.Query<CNamePNameDto>(dataQuery, new
+                    {
+                        Keyword = keyword,
+                        Offset = (page - 1) * pageSize,
+                        PageSize = pageSize,
+                        UserId = userId,
+                    }).ToList();
+
+                    // Set response
+                    response.CNamePNameList = data;
+                    response.TotalRecords = totalCount;
+                    response.IsSuccess = true;
+
+                }
+                else
+                {
+                    // Total Count
+                    var countQuery = @"SELECT COUNT(*) FROM [dbo].[ProjectManagement] pm
+                    INNER JOIN [dbo].[User] u ON u.Id = pm.UserId 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%') AND pm.IsEnabled = 1";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                    {
+                        Keyword = keyword,
+                    });
+
+                    // Paginated Data
+                    dataQuery = @"SELECT pm.Id, pm.UserId, (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName, pm.ProjectName
+                    FROM [dbo].[ProjectManagement] pm
+                    INNER JOIN [dbo].[User] u ON u.Id = pm.UserId 
+                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
+                    OR pm.ProjectName LIKE '%' + LOWER(@Keyword) + '%') AND pm.IsEnabled = 1
+                    ORDER BY pm.Id DESC
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+
+                    var data = connection.Query<CNamePNameDto>(dataQuery, new
+                    {
+                        Keyword = keyword,
+                        Offset = (page - 1) * pageSize,
+                        PageSize = pageSize,
+                    }).ToList();
+
+                    // Set response
+                    response.CNamePNameList = data;
+                    response.TotalRecords = totalCount;
+                    response.IsSuccess = true;
+
+                }
+            }
+
+            return response;
+
         }
 
         public AssignProjectResponse SoftDeleteAssignProjectById(string id)

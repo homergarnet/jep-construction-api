@@ -29,7 +29,7 @@ namespace jep_construction_api.Controllers
             {
 
                 var createAssignProject = _iAssignProjectService.CreateAssignProject(req);
-                if (!createAssignProject.IsSuccess && 
+                if (!createAssignProject.IsSuccess &&
                     createAssignProject.ApiMessage.Equals(AssignProjectConstants.ASSIGN_PROJECT_ALREADY_EXIST))
                 {
                     return new ContentResult
@@ -73,6 +73,41 @@ namespace jep_construction_api.Controllers
 
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
                 var getAssignProjectList = _iAssignProjectService.GetAssignProjectList(keyword ?? "", userId, page, pageSize);
+
+                return new ContentResult
+                {
+                    StatusCode = 200,
+                    ContentType = "application/json",
+                    Content = JsonSerializer.Serialize(getAssignProjectList)
+                };
+
+            }
+
+            catch (Exception ex)
+            {
+                return new ContentResult
+                {
+                    StatusCode = 500,
+                    ContentType = "text/html",
+                    Content = Common.GetFormattedExceptionMessage(ex)
+                };
+            }
+
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get-cname-pname-list")]
+        public IActionResult GetCNamePNameList(
+            [FromQuery] string? keyword = "", [FromQuery] long? userId = 0, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+        )
+        {
+
+            try
+            {
+
+                var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
+                var getAssignProjectList = _iAssignProjectService.GetCNamePNameList(keyword ?? "", userId, page, pageSize);
 
                 return new ContentResult
                 {

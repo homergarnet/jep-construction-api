@@ -62,6 +62,56 @@ namespace jep_construction_api.Services
 
         }
 
+        public ProjectManagementResponse GetProjectIdByCNamePName(string cName, string pName)
+        {
+            var response = new ProjectManagementResponse
+            {
+                ProjectManagementList = new List<ProjectManagementDto>(),
+                TotalRecords = 0L,
+                IsSuccess = false,
+                ApiMessage = string.Empty
+            };
+
+            if (cName.Equals("") || pName.Equals(""))
+            {
+                response.ApiMessage = ProjectManagementConstants.INVALID_PARAMETERS;
+                return response;
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                var query = @"
+                    SELECT pm.Id
+                    FROM [dbo].[ProjectManagement] pm
+                    INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
+                    WHERE pm.ProjectName = @ProjectName
+                    AND (LTRIM(RTRIM(COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, ''))) = @ClientName);";
+
+                var projectManagement = connection.QueryFirstOrDefault<ProjectManagementDto>(query,
+                    new
+                    {
+                        ProjectName = pName,
+                        ClientName = cName
+                    });
+
+                if (projectManagement != null)
+                {
+                    response.ProjectManagementList.Add(projectManagement);
+                    response.TotalRecords = 1;
+                    response.IsSuccess = true;
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.ApiMessage = ProjectManagementConstants.PROJECT_ID_NOT_FOUND;
+                }
+            }
+            return response;
+
+        }
+
         public ProjectManagementResponse GetProjectManagementById(long id)
         {
             var response = new ProjectManagementResponse
