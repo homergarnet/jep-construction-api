@@ -61,7 +61,7 @@ namespace jep_construction_api.Controllers
 
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet]
         [Route("get-review-list")]
         public IActionResult GetReviewList(
