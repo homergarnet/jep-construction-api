@@ -65,7 +65,7 @@ namespace jep_construction_api.Controllers
         [HttpGet]
         [Route("get-review-list")]
         public IActionResult GetReviewList(
-            [FromQuery] string? keyword = "", [FromQuery] long? userId = 0, [FromQuery] bool? isApprove = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
+            [FromQuery] string? keyword = "", [FromQuery] long? userId = 0, [FromQuery] bool? isApprove = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10
         )
         {
 

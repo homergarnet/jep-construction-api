@@ -9,6 +9,7 @@
         public string MobileNumber { get; set; }
         public byte Rate { get; set; }
         public string ReviewDescription { get; set; }
+        public bool IsApprove { get; set; }
         public DateTime DateTimeCreated { get; set; }
 
     }

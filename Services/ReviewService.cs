@@ -144,7 +144,7 @@ namespace jep_construction_api.Services
                         });
                         // Paginated Data
                         dataQuery = @"
-                        SELECT r.Id, r.Rate, r.ReviewDescription, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
+                        SELECT r.Id, r.Rate, r.ReviewDescription, r.IsApprove, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Review] r
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
@@ -167,7 +167,7 @@ namespace jep_construction_api.Services
                         response.TotalRecords = totalCount;
 
                     }
-                    else if(isApprove != null)
+                    else if (isApprove != null)
                     {
                         // Total Count
                         var countQuery = @"
@@ -184,7 +184,7 @@ namespace jep_construction_api.Services
                         });
                         // Paginated Data
                         dataQuery = @"
-                        SELECT r.Id, r.Rate, r.ReviewDescription, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
+                        SELECT r.Id, r.Rate, r.ReviewDescription, r.IsApprove, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Review] r
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
@@ -224,7 +224,7 @@ namespace jep_construction_api.Services
                         });
                         // Paginated Data
                         dataQuery = @"
-                        SELECT r.Id, r.Rate, r.ReviewDescription, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
+                        SELECT r.Id, r.Rate, r.ReviewDescription, r.IsApprove, r.DateTimeCreated, pm.ProjectName, u.Email, u.MobileNumber, 
                         (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS ClientName
                         FROM [dbo].[Review] r
                         INNER JOIN [dbo].[ProjectManagement] pm ON pm.Id = r.ProjectManagementId
