@@ -3,6 +3,7 @@
     public class AssignProjectConstants
     {
         public const string ASSIGN_PROJECT_ALREADY_EXIST = "Assign project already exist";
+        public const string ASSIGN_PROJECT_NOT_YET_DONE = "The project of the user is not yet done";
         public const string ASSIGN_PROJECT_CREATE_SUCCESS = "Assign project successfully created";
         public const string ASSIGN_PROJECT_INVALID_ID = "Invalid assign project ID";
         public const string ASSIGN_PROJECT_NOT_FOUND = "Assign project not found";
