@@ -27,7 +27,7 @@ namespace jep_construction_api.Services
 
         public AssignProjectResponse CreateAssignProject(AssignProjectCreateUpdateRequest req)
         {
-
+            var dateTimeNow = Common.DateTimeNow("Singapore Standard Time");
             var response = new AssignProjectResponse
             {
                 AssignProjectList = new List<AssignProjectDto>(),
@@ -35,12 +35,12 @@ namespace jep_construction_api.Services
                 ApiMessage = string.Empty
             };
 
-            var assignProjectExist = db.AssignProjects.Any(z => z.UserId == req.UserId && z.ProjectId == req.ProjectId);
+            var assignProjectExist = db.AssignProjects.Any(z => z.UserId == req.UserId && z.ProjectId == req.ProjectId && req.StartDate.Date <= z.EndDate.Date);
             if (assignProjectExist)
             {
 
                 response.IsSuccess = false;
-                response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_ALREADY_EXIST;
+                response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_NOT_YET_DONE;
 
             }
             else
@@ -51,7 +51,7 @@ namespace jep_construction_api.Services
                 assignProject.ProjectId = req.ProjectId;
                 assignProject.StartDate = req.StartDate;
                 assignProject.EndDate = req.EndDate;
-                assignProject.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
+                assignProject.DateTimeCreated = dateTimeNow;
                 db.AssignProjects.Add(assignProject);
                 db.SaveChanges();
                 response.IsSuccess = true;
@@ -428,37 +428,48 @@ namespace jep_construction_api.Services
                 IsSuccess = false,
                 ApiMessage = string.Empty
             };
+            var assignProjectExist = db.AssignProjects.Any(z => z.UserId == req.UserId && z.ProjectId == req.ProjectId && req.StartDate.Date <= z.EndDate.Date);
+            if (assignProjectExist)
+            {
 
-            using var connection = new SqlConnection(_connectionString);
-            var dateTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"));
-            assignProjectQuery = @"UPDATE [dbo].[AssignProject] 
+                response.IsSuccess = false;
+                response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_NOT_YET_DONE;
+
+            }
+            else
+            {
+                using var connection = new SqlConnection(_connectionString);
+                var dateTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"));
+                assignProjectQuery = @"UPDATE [dbo].[AssignProject] 
                             SET UserId = @UserId, ProjectId = @ProjectId, StartDate = @StartDate, 
                             EndDate = @EndDate, DateTimeUpdated = @DateTimeUpdated
                             WHERE Id = @Id
                             ";
 
-            var rowsInserted = connection.Execute(assignProjectQuery, new
-            {
-                Id = req.Id,
-                UserId = req.UserId,
-                ProjectId = req.ProjectId,
-                StartDate = req.StartDate,
-                EndDate = req.EndDate,
-                DateTimeUpdated = dateTimeNow,
-            });
+                var rowsInserted = connection.Execute(assignProjectQuery, new
+                {
+                    Id = req.Id,
+                    UserId = req.UserId,
+                    ProjectId = req.ProjectId,
+                    StartDate = req.StartDate,
+                    EndDate = req.EndDate,
+                    DateTimeUpdated = dateTimeNow,
+                });
 
-            if (rowsInserted > 0)
-            {
+                if (rowsInserted > 0)
+                {
 
-                response.IsSuccess = true;
-                response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_UPDATE_SUCCESS;
+                    response.IsSuccess = true;
+                    response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_UPDATE_SUCCESS;
 
+                }
+                else
+                {
+                    response.IsSuccess = false;
+                    response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_UPDATE_FAILED;
+                }
             }
-            else
-            {
-                response.IsSuccess = false;
-                response.ApiMessage = AssignProjectConstants.ASSIGN_PROJECT_UPDATE_FAILED;
-            }
+
 
             return response;
         }

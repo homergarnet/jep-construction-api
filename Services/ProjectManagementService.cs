@@ -83,7 +83,7 @@ namespace jep_construction_api.Services
                 connection.Open();
 
                 var query = @"
-                    SELECT pm.Id
+                    SELECT pm.Id, pm.Location
                     FROM [dbo].[ProjectManagement] pm
                     INNER JOIN [dbo].[User] u ON u.Id = pm.UserId
                     WHERE pm.ProjectName = @ProjectName

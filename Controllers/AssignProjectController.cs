@@ -30,7 +30,7 @@ namespace jep_construction_api.Controllers
 
                 var createAssignProject = _iAssignProjectService.CreateAssignProject(req);
                 if (!createAssignProject.IsSuccess &&
-                    createAssignProject.ApiMessage.Equals(AssignProjectConstants.ASSIGN_PROJECT_ALREADY_EXIST))
+                    createAssignProject.ApiMessage.Equals(AssignProjectConstants.ASSIGN_PROJECT_NOT_YET_DONE))
                 {
                     return new ContentResult
                     {
@@ -181,7 +181,8 @@ namespace jep_construction_api.Controllers
             {
                 var userEmailAdd = User.FindFirst("UserEmailAdd")?.Value;
                 var result = _iAssignProjectService.UpdateAssignProject(req);
-                if (!result.IsSuccess && result.ApiMessage.Equals(AssignProjectConstants.ASSIGN_PROJECT_UPDATE_FAILED))
+                if (!result.IsSuccess && result.ApiMessage.Equals(AssignProjectConstants.ASSIGN_PROJECT_UPDATE_FAILED) || 
+                    result.ApiMessage.Equals(AssignProjectConstants.ASSIGN_PROJECT_NOT_YET_DONE))
                 {
                     return new ContentResult
                     {
