@@ -94,7 +94,7 @@ namespace jep_construction_api.Services
                 IsSuccess = false,
                 ApiMessage = string.Empty
             };
-            var user = db.Users.Where(z => z.Email.Equals(loginDto.Email)).FirstOrDefault();
+            var user = db.Users.Where(z => z.Email.Equals(loginDto.Email) && z.IsEnabled == true).FirstOrDefault();
             bool verified = false;
             string password = loginDto.Password.Trim() ?? "";
 
