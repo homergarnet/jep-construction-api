@@ -120,12 +120,48 @@ namespace jep_construction_api.Services
             {
                 connection.Open();
 
-                var query = @"SELECT ea.Id, ea.Location, FORMAT(ea.TimeInOut, 'MM/dd/yyyy hh:mm tt') AS TimeInOut, 
-                    ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
-                    FROM [dbo].[EmployeeAttendance] ea
-                    INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE ea.Id = @Id";
+                var query = @"
+                    WITH AttendancePairs AS (
+                        SELECT
+                            tin.Id AS TimeInId,
+                            tin.EmployeeId,
+                            tin.Location,
+                            tin.TimeInOut AS TimeIn,
+                            tin.TimeInOutImage AS TimeInImage,
+                            tout.TimeInOut AS TimeOut,
+                            tout.TimeInOutImage AS TimeOutImage,
+                            DATEDIFF(MINUTE, tin.TimeInOut, tout.TimeInOut) AS DurationMinutes
+                        FROM EmployeeAttendance tin
+                        OUTER APPLY (
+                            SELECT TOP 1 *
+                            FROM EmployeeAttendance t
+                            WHERE 
+                                t.EmployeeId = tin.EmployeeId
+                                AND t.TimeInOutType = 'out'
+                                AND t.TimeInOut > tin.TimeInOut
+                            ORDER BY t.TimeInOut
+                        ) tout
+                        WHERE tin.TimeInOutType = 'in'
+                          AND tin.IsEnabled = 1
+                    )
+                    SELECT 
+                        ap.TimeInId AS Id,
+                        u.EmployeeNumber,
+                        (u.Firstname + ' ' + u.Lastname) AS EmployeeName,
+                        ap.Location,
+
+                        FORMAT(ap.TimeIn, 'MM/dd/yyyy hh:mm tt') AS TimeIn,
+                        ap.TimeInImage,
+
+                        FORMAT(ap.TimeOut, 'MM/dd/yyyy hh:mm tt') AS TimeOut,
+                        ap.TimeOutImage,
+
+                        CONCAT(ap.DurationMinutes / 60, 'H') AS Duration
+                    FROM AttendancePairs ap
+                    INNER JOIN [User] u ON u.Id = ap.EmployeeId
+                    WHERE ap.TimeInId = @Id;
+                ";
+
 
                 var attendance = connection.QueryFirstOrDefault<AttendanceDto>(query, new { Id = id });
 
@@ -173,11 +209,29 @@ namespace jep_construction_api.Services
                 if (userId != 0)
                 {
                     // Total Count
-                    var countQuery = @"SELECT COUNT(*) FROM [dbo].[EmployeeAttendance] ea 
-                    INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
-                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
-                    AND ea.EmployeeId = @UserId AND ea.IsEnabled = 1";
+                    var countQuery = @"
+                        WITH AttendancePairs AS (
+                            SELECT
+                                tin.Id AS TimeInId,
+                                tin.EmployeeId
+                            FROM EmployeeAttendance tin
+                            OUTER APPLY (
+                                SELECT TOP 1 *
+                                FROM EmployeeAttendance t
+                                WHERE 
+                                    t.EmployeeId = tin.EmployeeId
+                                    AND t.TimeInOutType = 'out'
+                                    AND t.TimeInOut > tin.TimeInOut
+                                ORDER BY t.TimeInOut
+                            ) tout
+                            WHERE tin.TimeInOutType = 'in'
+                              AND tin.IsEnabled = 1
+                        )
+                        SELECT COUNT(*)
+                        FROM AttendancePairs ap
+                        WHERE ap.EmployeeId = @UserId
+                    ";
+
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
                     {
@@ -186,18 +240,51 @@ namespace jep_construction_api.Services
                     });
 
                     // Paginated Data
-                    dataQuery = @"SELECT ea.Id, ea.Location, FORMAT(ea.TimeInOut, 'MM/dd/yyyy hh:mm tt') AS TimeInOut, 
-                    ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
-                    FROM [dbo].[EmployeeAttendance] ea
-                    INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
-                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
-                    AND ea.IsEnabled = 1
-                    AND ea.EmployeeId = @UserId
-                    ORDER BY ea.Id DESC
-                    OFFSET @Offset ROWS
-                    FETCH NEXT @PageSize ROWS ONLY";
+                    dataQuery = @"
+                        WITH AttendancePairs AS (
+                            SELECT
+                                tin.Id AS TimeInId,
+                                tin.EmployeeId,
+                                tin.Location,
+                                tin.TimeInOut AS TimeIn,
+                                tin.TimeInOutImage AS TimeInImage,
+                                tout.TimeInOut AS TimeOut,
+                                tout.TimeInOutImage AS TimeOutImage,
+                                DATEDIFF(MINUTE, tin.TimeInOut, tout.TimeInOut) AS DurationMinutes
+                            FROM EmployeeAttendance tin
+                            OUTER APPLY (
+                                SELECT TOP 1 *
+                                FROM EmployeeAttendance t
+                                WHERE 
+                                    t.EmployeeId = tin.EmployeeId
+                                    AND t.TimeInOutType = 'out'
+                                    AND t.TimeInOut > tin.TimeInOut
+                                ORDER BY t.TimeInOut
+                            ) tout
+                            WHERE tin.TimeInOutType = 'in'
+                              AND tin.IsEnabled = 1
+                        )
+                        SELECT 
+                            ap.TimeInId AS Id,
+                            u.EmployeeNumber,
+                            (u.Firstname + ' ' + u.Lastname) AS EmployeeName,
+                            ap.Location,
+
+                            FORMAT(ap.TimeIn, 'MM/dd/yyyy hh:mm tt') AS TimeIn,
+                            ap.TimeInImage,
+
+                            FORMAT(ap.TimeOut, 'MM/dd/yyyy hh:mm tt') AS TimeOut,
+                            ap.TimeOutImage,
+
+                            CONCAT(ap.DurationMinutes / 60, 'H') AS Duration
+                        FROM AttendancePairs ap
+                        INNER JOIN [User] u ON u.Id = ap.EmployeeId
+                        WHERE 
+                            ap.EmployeeId = @UserId
+                        ORDER BY ap.TimeInId DESC
+                        OFFSET @Offset ROWS
+                        FETCH NEXT @PageSize ROWS ONLY
+                    ";
 
                     var data = connection.Query<AttendanceDto>(dataQuery, new
                     {
@@ -215,11 +302,28 @@ namespace jep_construction_api.Services
                 else
                 {
                     // Total Count
-                    var countQuery = @"SELECT COUNT(*) FROM [dbo].[EmployeeAttendance] ea 
-                    INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
-                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
-                    AND ea.IsEnabled = 1";
+                    var countQuery = @"
+                        WITH AttendancePairs AS (
+                            SELECT
+                                tin.Id AS TimeInId,
+                                tin.EmployeeId
+                            FROM EmployeeAttendance tin
+                            OUTER APPLY (
+                                SELECT TOP 1 *
+                                FROM EmployeeAttendance t
+                                WHERE 
+                                    t.EmployeeId = tin.EmployeeId
+                                    AND t.TimeInOutType = 'out'
+                                    AND t.TimeInOut > tin.TimeInOut
+                                ORDER BY t.TimeInOut
+                            ) tout
+                            WHERE tin.TimeInOutType = 'in'
+                              AND tin.IsEnabled = 1
+                        )
+                        SELECT COUNT(*)
+                        FROM AttendancePairs ap
+                    ";
+
 
                     var totalCount = connection.ExecuteScalar<long>(countQuery, new
                     {
@@ -227,17 +331,49 @@ namespace jep_construction_api.Services
                     });
 
                     // Paginated Data
-                    dataQuery = @"SELECT ea.Id, ea.Location, FORMAT(ea.TimeInOut, 'MM/dd/yyyy hh:mm tt') AS TimeInOut, 
-                    ea.TimeInOutType, ea.TimeInOutImage, u.EmployeeNumber, 
-                    (COALESCE(u.Firstname, '') + ' ' + COALESCE(u.Lastname, '')) AS EmployeeName
-                    FROM [dbo].[EmployeeAttendance] ea
-                    INNER JOIN [dbo].[User] u ON u.Id = ea.EmployeeId
-                    WHERE (@Keyword = '' OR LOWER(LTRIM(RTRIM(CONCAT(u.Firstname, ' ', u.Lastname)))) LIKE '%' + LOWER(@Keyword) + '%' 
-                    OR ea.TimeInOutType LIKE '%' + LOWER(@Keyword) + '%')
-                    AND ea.IsEnabled = 1
-                    ORDER BY ea.Id DESC
-                    OFFSET @Offset ROWS
-                    FETCH NEXT @PageSize ROWS ONLY";
+                    dataQuery = @"
+                        WITH AttendancePairs AS (
+                            SELECT
+                                tin.Id AS TimeInId,
+                                tin.EmployeeId,
+                                tin.Location,
+                                tin.TimeInOut AS TimeIn,
+                                tin.TimeInOutImage AS TimeInImage,
+                                tout.TimeInOut AS TimeOut,
+                                tout.TimeInOutImage AS TimeOutImage,
+                                DATEDIFF(MINUTE, tin.TimeInOut, tout.TimeInOut) AS DurationMinutes
+                            FROM EmployeeAttendance tin
+                            OUTER APPLY (
+                                SELECT TOP 1 *
+                                FROM EmployeeAttendance t
+                                WHERE 
+                                    t.EmployeeId = tin.EmployeeId
+                                    AND t.TimeInOutType = 'out'
+                                    AND t.TimeInOut > tin.TimeInOut
+                                ORDER BY t.TimeInOut
+                            ) tout
+                            WHERE tin.TimeInOutType = 'in'
+                              AND tin.IsEnabled = 1
+                        )
+                        SELECT 
+                            ap.TimeInId AS Id,
+                            u.EmployeeNumber,
+                            (u.Firstname + ' ' + u.Lastname) AS EmployeeName,
+                            ap.Location,
+
+                            FORMAT(ap.TimeIn, 'MM/dd/yyyy hh:mm tt') AS TimeIn,
+                            ap.TimeInImage,
+
+                            FORMAT(ap.TimeOut, 'MM/dd/yyyy hh:mm tt') AS TimeOut,
+                            ap.TimeOutImage,
+
+                            CONCAT(ap.DurationMinutes / 60, 'H') AS Duration
+                        FROM AttendancePairs ap
+                        INNER JOIN [User] u ON u.Id = ap.EmployeeId
+                        ORDER BY ap.TimeInId DESC
+                        OFFSET @Offset ROWS
+                        FETCH NEXT @PageSize ROWS ONLY
+                    ";
 
                     var data = connection.Query<AttendanceDto>(dataQuery, new
                     {

@@ -129,70 +129,76 @@ namespace jep_construction_api.Services
 
                     // Generate JWT
                     var token = new JwtSecurityTokenHandler().WriteToken(auth);
+                    response.IsSuccess = true;
+                    response.ApiMessage = token;
+                    response.LoginType = user.UserType;
+                    return response;
+                    //if (loginDto.UserType.Equals("admin"))
+                    //{
+                    //    if (user.UserType.Equals(loginDto.UserType))
+                    //    {
 
-                    if (loginDto.UserType.Equals("admin"))
-                    {
-                        if (user.UserType.Equals(loginDto.UserType))
-                        {
+                    //        response.IsSuccess = true;
+                    //        response.ApiMessage = token;
+                    //        response.LoginType = user.UserType;
+                    //        return response;
 
-                            response.IsSuccess = true;
-                            response.ApiMessage = token;
-                            return response;
+                    //    }
+                    //    else
+                    //    {
 
-                        }
-                        else
-                        {
+                    //        response.IsSuccess = false;
+                    //        response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                    //        return response;
 
-                            response.IsSuccess = false;
-                            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
-                            return response;
+                    //    }
 
-                        }
+                    //}
 
-                    }
+                    //else if (loginDto.UserType.Equals("employee"))
+                    //{
 
-                    else if (loginDto.UserType.Equals("employee"))
-                    {
+                    //    if (user.UserType.Equals(loginDto.UserType))
+                    //    {
 
-                        if (user.UserType.Equals(loginDto.UserType))
-                        {
+                    //        response.IsSuccess = true;
+                    //        response.ApiMessage = token;
+                    //        response.LoginType = "employee";
+                    //        return response;
 
-                            response.IsSuccess = true;
-                            response.ApiMessage = token;
-                            return response;
+                    //    }
+                    //    else
+                    //    {
 
-                        }
-                        else
-                        {
+                    //        response.IsSuccess = false;
+                    //        response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                    //        return response;
 
-                            response.IsSuccess = false;
-                            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
-                            return response;
+                    //    }
 
-                        }
+                    //}
 
-                    }
+                    //else if (loginDto.UserType.Equals("client"))
+                    //{
 
-                    else if (loginDto.UserType.Equals("client"))
-                    {
+                    //    if (user.UserType.Equals(loginDto.UserType))
+                    //    {
 
-                        if (user.UserType.Equals(loginDto.UserType))
-                        {
+                    //        response.IsSuccess = true;
+                    //        response.ApiMessage = token;
+                    //        response.LoginType = "client";
+                    //        return response;
+                    //    }
+                    //    else
+                    //    {
 
-                            response.IsSuccess = true;
-                            response.ApiMessage = token;
-                            return response;
-                        }
-                        else
-                        {
+                    //        response.IsSuccess = false;
+                    //        response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
+                    //        return response;
 
-                            response.IsSuccess = false;
-                            response.ApiMessage = AuthConstants.WRONG_USER_PASSWORD;
-                            return response;
+                    //    }
 
-                        }
-
-                    }
+                    //}
 
                 }
 

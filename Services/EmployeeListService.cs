@@ -65,7 +65,6 @@ namespace jep_construction_api.Services
                      .Select(u => u.Id)
                      .FirstOrDefault();
                 lastId++;
-
                 user.EmployeeNumber = Common.GenEmployeeNumber(lastId.ToString());
                 user.Firstname = createEmployeeReq.FirstName?.Trim() ?? "";
                 user.Lastname = createEmployeeReq.LastName?.Trim() ?? "";
@@ -75,8 +74,14 @@ namespace jep_construction_api.Services
                 user.Status = createEmployeeReq.Status?.Trim() ?? "";
                 user.Password = BCrypt.Net.BCrypt.HashPassword(configuration["DefaultPassword:Password"]);
                 user.Address = createEmployeeReq.Address?.Trim() ?? "";
+                user.Gender = createEmployeeReq.Gender?.Trim() ?? "";
+                user.Department = createEmployeeReq.Department?.Trim() ?? "";
+                user.HourlyRate = createEmployeeReq.HourlyRate;
+                user.EmergencyContactName = createEmployeeReq.EmergencyContactName?.Trim() ?? "";
+                user.EmergencyRelationship = createEmployeeReq.EmergencyRelationship?.Trim() ?? "";
+                user.EmergencyContactNo = createEmployeeReq.EmergencyContactNo?.Trim() ?? "";
                 user.DateOfBirth = createEmployeeReq.DateOfBirth;
-                user.UserType = createEmployeeReq.AccountType?.Trim() ?? "";
+                user.UserType = createEmployeeReq.UserType?.Trim() ?? "";
                 user.DateTimeCreated = Common.DateTimeNow("Singapore Standard Time");
                 db.Users.Add(user);
                 db.SaveChanges();
@@ -161,17 +166,33 @@ namespace jep_construction_api.Services
                     Keyword = keyword,
                     accountType = accountType
                 });
-
+                var dataQuery = "";
+                if (accountType.Equals("workers"))
+                {
+                    dataQuery = @"
+                    SELECT *
+                    FROM [dbo].[User]
+                    WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR 
+                    Status LIKE '%' + @Keyword + '%' OR EmployeeNumber LIKE '%' + @Keyword + '%') 
+                    AND UserType <> 'admin' AND UserType <> 'client' AND IsEnabled = 1
+                    ORDER BY Id DESC
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+                }
+                else
+                {
+                    dataQuery = @"
+                    SELECT *
+                    FROM [dbo].[User]
+                    WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR 
+                    Status LIKE '%' + @Keyword + '%' OR EmployeeNumber LIKE '%' + @Keyword + '%') 
+                    AND UserType = @AccountType AND IsEnabled = 1
+                    ORDER BY Id DESC
+                    OFFSET @Offset ROWS
+                    FETCH NEXT @PageSize ROWS ONLY";
+                }
                 // Paginated Data
-                var dataQuery = @"
-                SELECT *
-                FROM [dbo].[User]
-                WHERE (@Keyword = '' OR Email LIKE '%' + @Keyword + '%' OR 
-                Status LIKE '%' + @Keyword + '%' OR EmployeeNumber LIKE '%' + @Keyword + '%') 
-                AND UserType = @AccountType AND IsEnabled = 1
-                ORDER BY Id DESC
-                OFFSET @Offset ROWS
-                FETCH NEXT @PageSize ROWS ONLY";
+
 
                 var data = connection.Query<UserDto>(dataQuery, new
                 {
@@ -237,8 +258,10 @@ namespace jep_construction_api.Services
             var dateTimeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"));
             employeeQuery = @"UPDATE [dbo].[User] 
                             SET Email = @Email, FirstName = @FirstName, LastName = @LastName, MobileNumber = @MobileNumber,
-                            Position = @Position, Salary = @Salary, Status = @Status, Address = @Address,
-                            DateOfBirth = @DateOfBirth, DateTimeUpdated = @DateTimeUpdated
+                            Position = @Position, Salary = @Salary, Status = @Status, Address = @Address, Gender = @Gender,
+                            Department = @Department, HourlyRate = @HourlyRate, EmergencyContactName = @EmergencyContactName,
+                            EmergencyRelationship = @EmergencyRelationship, EmergencyContactNo = @EmergencyContactNo,
+                            DateOfBirth = @DateOfBirth, UserType = @UserType, DateTimeUpdated = @DateTimeUpdated
                             WHERE Id = @Id
                             ";
 
@@ -253,6 +276,12 @@ namespace jep_construction_api.Services
                 Salary = updateEmployeeReq.Salary,
                 Status = updateEmployeeReq.Status,
                 Address = updateEmployeeReq.Address,
+                Gender = updateEmployeeReq.Gender,
+                Department = updateEmployeeReq.Department,
+                HourlyRate = updateEmployeeReq.HourlyRate,
+                EmergencyContactName = updateEmployeeReq.EmergencyContactName,
+                EmergencyRelationship = updateEmployeeReq.EmergencyRelationship,
+                EmergencyContactNo = updateEmployeeReq.EmergencyContactNo,
                 DateOfBirth = updateEmployeeReq.DateOfBirth,
                 DateTimeUpdated = dateTimeNow,
             });

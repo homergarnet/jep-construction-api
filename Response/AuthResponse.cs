@@ -8,6 +8,7 @@ namespace jep_construction_api.Response
         public long TotalRecords { get; set; }
         public bool IsSuccess { get; set; }
         public string ApiMessage { get; set; }
+        public string LoginType { get; set; }
     }
 
 }

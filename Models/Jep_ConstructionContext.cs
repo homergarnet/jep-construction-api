@@ -253,8 +253,24 @@ namespace jep_construction_api.Models
                     .HasMaxLength(255)
                     .IsUnicode(false);
 
+                entity.Property(e => e.Department)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.Email)
                     .HasMaxLength(255)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.EmergencyContactName)
+                    .HasMaxLength(255)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.EmergencyContactNo)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.EmergencyRelationship)
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity.Property(e => e.EmployeeNumber)
@@ -262,6 +278,10 @@ namespace jep_construction_api.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.Firstname)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Gender)
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
