@@ -131,7 +131,7 @@ namespace jep_construction_api.Services
                     var token = new JwtSecurityTokenHandler().WriteToken(auth);
                     response.IsSuccess = true;
                     response.ApiMessage = token;
-                    response.LoginType = user.UserType;
+                    response.LoginType = !user.UserType.Equals("client") && !user.UserType.Equals("admin") ? "employee" : user.UserType;
                     return response;
                     //if (loginDto.UserType.Equals("admin"))
                     //{
