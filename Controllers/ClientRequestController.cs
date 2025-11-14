@@ -30,7 +30,6 @@ namespace jep_construction_api.Controllers
 
         }
 
-        [Authorize]
         [HttpPost]
         [Route("create-client-request")]
         public IActionResult CreateClientRequest([FromBody] CreateUpdateClientRequest req)
