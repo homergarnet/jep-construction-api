@@ -284,6 +284,7 @@ namespace jep_construction_api.Services
                 EmergencyContactNo = updateEmployeeReq.EmergencyContactNo,
                 DateOfBirth = updateEmployeeReq.DateOfBirth,
                 DateTimeUpdated = dateTimeNow,
+                UserType = updateEmployeeReq.UserType,
             });
 
             if (rowsInserted > 0)
