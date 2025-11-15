@@ -213,37 +213,6 @@ namespace jep_construction_api.Services
                         WITH AttendancePairs AS (
                             SELECT
                                 tin.Id AS TimeInId,
-                                tin.EmployeeId
-                            FROM EmployeeAttendance tin
-                            OUTER APPLY (
-                                SELECT TOP 1 *
-                                FROM EmployeeAttendance t
-                                WHERE 
-                                    t.EmployeeId = tin.EmployeeId
-                                    AND t.TimeInOutType = 'out'
-                                    AND t.TimeInOut > tin.TimeInOut
-                                ORDER BY t.TimeInOut
-                            ) tout
-                            WHERE tin.TimeInOutType = 'in'
-                              AND tin.IsEnabled = 1
-                        )
-                        SELECT COUNT(*)
-                        FROM AttendancePairs ap
-                        WHERE ap.EmployeeId = @UserId
-                    ";
-
-
-                    var totalCount = connection.ExecuteScalar<long>(countQuery, new
-                    {
-                        Keyword = keyword,
-                        UserId = userId
-                    });
-
-                    // Paginated Data
-                    dataQuery = @"
-                        WITH AttendancePairs AS (
-                            SELECT
-                                tin.Id AS TimeInId,
                                 tin.EmployeeId,
                                 tin.Location,
                                 tin.TimeInOut AS TimeIn,
@@ -264,6 +233,53 @@ namespace jep_construction_api.Services
                             WHERE tin.TimeInOutType = 'in'
                               AND tin.IsEnabled = 1
                         )
+
+                        SELECT COUNT(*)
+                        FROM AttendancePairs ap
+                        INNER JOIN [User] u ON u.Id = ap.EmployeeId
+
+                        WHERE 
+                            ap.EmployeeId = @UserId
+                            AND (
+                                (@Keyword IS NULL OR @Keyword = '')
+                                OR u.Firstname + ' ' + u.Lastname LIKE '%' + @Keyword + '%'
+                                OR CONVERT(VARCHAR(10), ap.TimeIn, 103) LIKE '%' + @Keyword + '%'
+                                OR CONVERT(VARCHAR(10), ap.TimeOut, 103) LIKE '%' + @Keyword + '%'
+                            );
+                    ";
+
+                    var totalCount = connection.ExecuteScalar<long>(countQuery, new
+                    {
+                        Keyword = keyword,
+                        UserId = userId
+                    });
+
+                    // Paginated Data
+                    dataQuery = @"
+                        WITH AttendancePairs AS (
+                            SELECT
+                                tin.Id AS TimeInId,
+                                tin.EmployeeId,
+                                tin.Location,
+                                tin.TimeInOut AS TimeIn,
+                                tin.TimeInOutImage AS TimeInImage,
+                                tout.TimeInOut AS TimeOut,
+                                tout.TimeOutImage AS TimeOutImage,
+                                DATEDIFF(MINUTE, tin.TimeInOut, tout.TimeInOut) AS DurationMinutes
+                            FROM EmployeeAttendance tin
+                            OUTER APPLY (
+                                SELECT TOP 1 *
+                                FROM EmployeeAttendance t
+                                WHERE 
+                                    t.EmployeeId = tin.EmployeeId
+                                    AND t.TimeInOutType = 'out'
+                                    AND t.TimeInOut > tin.TimeInOut
+                                ORDER BY t.TimeInOut
+                            ) tout
+                            WHERE tin.TimeInOutType = 'in'
+                              AND tin.IsEnabled = 1
+                        )
+
                         SELECT 
                             ap.TimeInId AS Id,
                             u.EmployeeNumber,
@@ -279,12 +295,21 @@ namespace jep_construction_api.Services
                             CONCAT(ap.DurationMinutes / 60, 'H') AS Duration
                         FROM AttendancePairs ap
                         INNER JOIN [User] u ON u.Id = ap.EmployeeId
+
                         WHERE 
                             ap.EmployeeId = @UserId
+                            AND (
+                                (@Keyword IS NULL OR @Keyword = '')
+                                OR u.Firstname + ' ' + u.Lastname LIKE '%' + @Keyword + '%'
+                                OR CONVERT(VARCHAR(10), ap.TimeIn, 103) LIKE '%' + @Keyword + '%'
+                                OR CONVERT(VARCHAR(10), ap.TimeOut, 103) LIKE '%' + @Keyword + '%'
+                            )
+
                         ORDER BY ap.TimeInId DESC
                         OFFSET @Offset ROWS
-                        FETCH NEXT @PageSize ROWS ONLY
+                        FETCH NEXT @PageSize ROWS ONLY;
                     ";
+
 
                     var data = connection.Query<AttendanceDto>(dataQuery, new
                     {
@@ -306,7 +331,13 @@ namespace jep_construction_api.Services
                         WITH AttendancePairs AS (
                             SELECT
                                 tin.Id AS TimeInId,
-                                tin.EmployeeId
+                                tin.EmployeeId,
+                                tin.Location,
+                                tin.TimeInOut AS TimeIn,
+                                tin.TimeInOutImage AS TimeInImage,
+                                tout.TimeInOut AS TimeOut,
+                                tout.TimeInOutImage AS TimeOutImage,
+                                DATEDIFF(MINUTE, tin.TimeInOut, tout.TimeInOut) AS DurationMinutes
                             FROM EmployeeAttendance tin
                             OUTER APPLY (
                                 SELECT TOP 1 *
@@ -320,8 +351,20 @@ namespace jep_construction_api.Services
                             WHERE tin.TimeInOutType = 'in'
                               AND tin.IsEnabled = 1
                         )
+
                         SELECT COUNT(*)
                         FROM AttendancePairs ap
+                        INNER JOIN [User] u ON u.Id = ap.EmployeeId
+
+                        WHERE 
+                        (
+                            (@Keyword IS NULL OR @Keyword = '')
+                            OR u.Firstname + ' ' + u.Lastname LIKE '%' + @Keyword + '%'
+    
+                            -- Filter using dd/MM/yyyy (date only)
+                            OR CONVERT(VARCHAR(10), ap.TimeIn, 103) LIKE '%' + @Keyword + '%'
+                            OR CONVERT(VARCHAR(10), ap.TimeOut, 103) LIKE '%' + @Keyword + '%'
+                        )
                     ";
 
 
@@ -355,6 +398,7 @@ namespace jep_construction_api.Services
                             WHERE tin.TimeInOutType = 'in'
                               AND tin.IsEnabled = 1
                         )
+
                         SELECT 
                             ap.TimeInId AS Id,
                             u.EmployeeNumber,
@@ -370,9 +414,21 @@ namespace jep_construction_api.Services
                             CONCAT(ap.DurationMinutes / 60, 'H') AS Duration
                         FROM AttendancePairs ap
                         INNER JOIN [User] u ON u.Id = ap.EmployeeId
+
+                        -- 🔍 Keyword filter here
+                        WHERE 
+                        (
+                            (@Keyword IS NULL OR @Keyword = '')
+                            OR u.Firstname + ' ' + u.Lastname LIKE '%' + @Keyword + '%'
+    
+                            -- Filter using dd/MM/yyyy (date only)
+                            OR CONVERT(VARCHAR(10), ap.TimeIn, 103) LIKE '%' + @Keyword + '%'
+                            OR CONVERT(VARCHAR(10), ap.TimeOut, 103) LIKE '%' + @Keyword + '%'
+                        )
+
                         ORDER BY ap.TimeInId DESC
                         OFFSET @Offset ROWS
-                        FETCH NEXT @PageSize ROWS ONLY
+                        FETCH NEXT @PageSize ROWS ONLY;
                     ";
 
                     var data = connection.Query<AttendanceDto>(dataQuery, new
